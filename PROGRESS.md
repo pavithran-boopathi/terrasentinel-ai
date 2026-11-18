@@ -1,5 +1,11 @@
 # Progress
 
+## 2026-11-18 — Published to GitHub, CI green
+- Project moved to `~/Desktop/terrasentinel/terrasentinel-ai`; `.venv`, `node_modules` rebuilt; all tests re-run there
+- Public repo: https://github.com/pavithran-boopathi/terrasentinel-ai (pushed with approval)
+- First CI run failed: `backend` job lacked numpy for the Phase 2 tests → added a `data-ml` job (geo extras + CPU torch)
+- CI run 44393784983: **backend, backend-postgres (migrations on PostGIS), data-ml, frontend — all success**
+
 ## 2026-11-18 — Phase 2 (satellite data engineering) complete
 ### Data
 - Sen1Floods11 v1.1 hand-labeled subset downloaded with approval: S1Hand, LabelHand, JRCWaterHand, S1OtsuLabelHand, split CSVs, metadata — 1,789 files, 706 MB, all MD5-verified (`scripts/download_sen1floods11.py`, manifest in `data/raw/sen1floods11/MANIFEST.json`)
@@ -69,7 +75,7 @@ Otsu + pixel-classifier baselines, then U-Net (BCE+Dice, ignore index 255) on `g
 - Manual end-to-end in browser: dashboard shows live API data (device = MPS); register → login → protected page works; Explorer map renders
 
 ### Not verified
-- GitHub Actions CI has not run yet (nothing pushed)
+- (CI verified later the same day — see top entry)
 
 ### Issues found & fixed
 - MapLibre v6 worker failed to load under Vite's dependency pre-bundling → excluded from `optimizeDeps`
