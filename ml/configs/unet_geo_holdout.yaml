@@ -1,0 +1,12 @@
+# Same model; whole flood events held out (test: Bolivia, Mekong, Ghana · val: Pakistan, Spain).
+name: unet-geo-holdout
+split_scheme: geo_holdout_v1
+eval_splits: [test]
+base_channels: 32
+depth: 4
+dropout: 0.1
+epochs: 80
+batch_size: 8
+lr: 0.001
+crop: 256
+patience: 15

@@ -37,8 +37,13 @@ ml = [
   "torchvision>=0.20",
   "numpy>=1.26",
   "scikit-learn>=1.5",
-  "albumentations>=1.4",
+  "scipy>=1.13",
+  "albumentations>=2.0,<2.1",  # 2.0.x is the last MIT-licensed line
   "mlflow>=2.18",
+  "pyyaml>=6.0",
+]
+# Phase 4+: pretrained transformers / TorchGeo models.
+ml-research = [
   "transformers>=4.46",
   "torchgeo>=0.6",
 ]

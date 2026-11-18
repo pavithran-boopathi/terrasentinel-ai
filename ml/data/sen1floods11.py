@@ -274,6 +274,16 @@ class Sen1Floods11Dataset:
         self.root = Path(root)
         self.stats = stats
         self.transform = transform
+        self._cache: list[tuple[np.ndarray, np.ndarray]] | None = None
+
+    def preload(self) -> Sen1Floods11Dataset:
+        """Read and normalise every chip once into RAM (~2 MB per chip). Use with
+        ``num_workers=0``: with spawn-based workers the cache would be copied to each worker."""
+        self._cache = []
+        for c in self.chips:
+            img_db, target = read_chip(c, self.root)
+            self._cache.append((normalize(img_db, self.stats), target))
+        return self
 
     def __len__(self) -> int:
         return len(self.chips)
@@ -282,8 +292,11 @@ class Sen1Floods11Dataset:
         import torch
 
         chip = self.chips[idx]
-        img_db, target = read_chip(chip, self.root)
-        img = normalize(img_db, self.stats)
+        if self._cache is not None:
+            img, target = self._cache[idx]
+        else:
+            img_db, target = read_chip(chip, self.root)
+            img = normalize(img_db, self.stats)
         if self.transform is not None:
             out = self.transform(image=img.transpose(1, 2, 0), mask=target)
             img, target = out["image"].transpose(2, 0, 1), out["mask"]
