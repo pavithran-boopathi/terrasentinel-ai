@@ -42,8 +42,9 @@
 |---|---|---|
 | Python version | 3.12 (via conda env `terrasentinel` + project `.venv`) | System Python is 3.14 (Anaconda); geospatial + torch wheels are most mature on 3.12 |
 | Packaging | One `pyproject.toml`, extras `api` / `ml` / `geo` / `dev` | API container stays slim (no torch); workers add `ml,geo` |
-| DB | PostgreSQL 16 + PostGIS 3.4; SQLite fallback for zero-dependency dev/tests | Spatial joins for exposure analysis belong in PostGIS. Docker isn't installed yet, so the app must also boot without it. Geometry-bearing features will require Postgres |
-| Migrations | Alembic, hand-checked; a test asserts migrations == ORM models | Prevents schema drift |
+| DB | PostgreSQL 16 + PostGIS 3.4; SQLite fallback for zero-dependency dev/tests | Spatial joins for exposure analysis belong in PostGIS. The app also boots without Docker. Geometry-bearing features will require Postgres |
+| Migrations | Alembic, hand-checked; a test asserts migrations == ORM models; autogenerate filtered to our tables | Prevents schema drift and accidental DROPs of PostGIS extension tables |
+| Container runtime (dev) | Colima (VZ) on macOS | Open source, no admin rights; containers have no MPS, so training stays native |
 | Auth | OAuth2 password flow → JWT (HS256, 60 min), Argon2id via `pwdlib` | Standard, stateless; first registered user becomes admin |
 | Secrets | `TS_SECRET_KEY` required in production; dev generates an ephemeral key | Fail closed in prod, zero setup in dev |
 | Background jobs | Celery + Redis, `acks_late`, `prefetch=1`, time limits | ML jobs are long and memory-heavy; redeliver on worker crash |

@@ -27,11 +27,16 @@ make dev                   # API http://127.0.0.1:8000/api/v1/docs · web http:/
 ```
 
 ## Quick start (Docker)
+Docker runtime on this Mac: **Colima** (open source, Apple Virtualization.framework), installed in the
+`terrasentinel` conda env — see [docs/docker-macos.md](docs/docker-macos.md).
 ```bash
+conda activate terrasentinel
+colima start            # once per boot
 echo "TS_SECRET_KEY=$(python -c 'import secrets;print(secrets.token_urlsafe(48))')" > .env
 docker compose up --build
 ```
-Runs PostGIS, Redis, API, Celery worker and web.
+Runs PostGIS, Redis, API, Celery worker and web (http://127.0.0.1:5173).
+Containers on macOS cannot use the Apple GPU (MPS): **train models natively** in `.venv`, not in Docker.
 
 ## Checks
 ```bash

@@ -8,6 +8,7 @@ from sqlalchemy import engine_from_config, pool
 import backend.models  # noqa: F401 - register models on metadata
 from backend.core.config import get_settings
 from backend.db.base import Base
+from backend.db.migration_filters import include_object
 
 config = context.config
 if config.config_file_name is not None:
@@ -23,6 +24,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         render_as_batch=True,
+        include_object=include_object,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -36,7 +38,10 @@ def run_migrations_online() -> None:
     )
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata, render_as_batch=True
+            connection=connection,
+            target_metadata=target_metadata,
+            render_as_batch=True,
+            include_object=include_object,
         )
         with context.begin_transaction():
             context.run_migrations()

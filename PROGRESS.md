@@ -1,5 +1,19 @@
 # Progress
 
+## 2026-11-18 — Docker runtime installed & full stack verified
+- Installed Colima 0.9.1 + Docker CLI 29.9 + Compose from conda-forge (no Homebrew/admin needed); VM 4 CPU / 8 GB / 60 GB
+- Fixed: conda-forge `limactl` lacked the macOS virtualization entitlement → ad-hoc signed (docs/docker-macos.md)
+- `docker compose up --build`: db, redis, api, worker, web all **healthy**
+- Verified on PostgreSQL 16 + PostGIS 3.4: `alembic upgrade head`, full `downgrade base` → `upgrade head` cycle, PostGIS extension present, ORM ↔ schema diff empty
+- Verified Celery task round-trip through Redis to the worker container
+- Verified in browser: containerised web → API → Postgres; register / login / me
+- **Bugs found & fixed**
+  - Postgres healthcheck passed against the image's socket-only init server → API raced and crashed. Now probes TCP (compose + CI)
+  - Alembic autogenerate would have proposed dropping 37 PostGIS/TIGER tables → `include_object` filter + regression test
+  - Worker inherited the API's HTTP healthcheck → now `celery inspect ping`
+- Tests: backend **21 passed**, frontend 7 passed, ruff clean
+- Note: containers report device = CPU (no MPS in Linux VMs on macOS) — training runs natively
+
 ## 2026-11-18 — Phase 1 complete
 
 ### Environment (measured by `scripts/check_env.py`)
@@ -25,9 +39,7 @@
 - Manual end-to-end in browser: dashboard shows live API data (device = MPS); register → login → protected page works; Explorer map renders
 
 ### Not verified
-- `docker compose up` — Docker is not installed on this Mac
-- Alembic migration against real PostgreSQL/PostGIS — only SQLite locally; covered by the CI job, which has not run yet (nothing pushed)
-- Celery with a real Redis broker — only eager mode tested
+- GitHub Actions CI has not run yet (nothing pushed)
 
 ### Issues found & fixed
 - MapLibre v6 worker failed to load under Vite's dependency pre-bundling → excluded from `optimizeDeps`
@@ -35,6 +47,5 @@
 - `vite.config.ts` needed `@types/node`
 
 ### Next (Phase 2)
-1. Decide on Docker runtime (Docker Desktop, OrbStack or Colima) — optional, the app runs without it
-2. Check Sen1Floods11 license, structure and size; ask before downloading
-3. Install `.[geo]` extras and build the raster validation / dataset pipeline
+1. Check Sen1Floods11 license, structure and size; ask before downloading
+2. Install `.[geo]` extras and build the raster validation / dataset pipeline

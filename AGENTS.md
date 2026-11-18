@@ -15,7 +15,9 @@ Read `PROJECT_PLAN.md`, `ARCHITECTURE.md` and the latest entry in `PROGRESS.md` 
   `conda activate terrasentinel && source .venv/bin/activate`
 - Node 22 is also in the `terrasentinel` conda env (no Homebrew on this machine).
 - Apple Silicon: use `mps`, never assume CUDA. Device selection: `backend/services/compute.py`.
-- Docker is not installed (as of 2026-11-18); the API falls back to SQLite at `data/terrasentinel-dev.db`.
+- Docker = Colima in the `terrasentinel` conda env (`colima start`), see `docs/docker-macos.md`. Without Docker the API falls back to SQLite at `data/terrasentinel-dev.db`.
+- Containers have **no MPS**: run training natively in `.venv`.
+- New Alembic migrations: autogenerate is filtered by `backend/db/migration_filters.py` so PostGIS/TIGER tables are never dropped.
 
 ## Commands
 | Task | Command |
