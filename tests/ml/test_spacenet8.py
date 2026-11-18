@@ -106,3 +106,34 @@ def test_dataset_crops_and_pads(tmp_path):
     assert full["image"].shape == (6, 96, 96) and (full["mask"][70:] == 255).all()
     crop = SN8Dataset(["0_1_2"], tmp_path, crop=32, augment=True)[0]
     assert crop["image"].shape == (6, 32, 32) and crop["mask"].max() <= 4
+
+
+def test_focus_sampling_centres_crops_on_rare_class(tmp_path):
+    mask = np.zeros((200, 200), np.uint8)
+    mask[180:185, 180:185] = 2  # tiny flooded building in a corner
+    np.savez_compressed(
+        tmp_path / "0_1_2.npz",
+        pre=np.zeros((3, 200, 200), np.uint8),
+        post=np.zeros((3, 200, 200), np.uint8),
+        mask=mask,
+    )
+    ds = SN8Dataset(["0_1_2"], tmp_path, crop=32, focus_classes=(2,), focus_prob=1.0)
+    assert all((ds[0]["mask"] == 2).any() for _ in range(10))
+
+
+def test_ce_dice_loss_penalises_foreground_overprediction():
+    import torch
+
+    from ml.training.train_spacenet8 import CEDiceLoss
+
+    y = torch.zeros(1, 8, 8, dtype=torch.long)
+    y[0, :2, :2] = 1
+    good = torch.full((1, 5, 8, 8), -5.0)
+    good[:, 0] = 5
+    good[0, 1, :2, :2], good[0, 0, :2, :2] = 5, -5
+    over = good.clone()
+    over[0, 1], over[0, 0] = 5, -5  # building everywhere
+    lf = CEDiceLoss(torch.ones(5))
+    assert lf(good, y) < lf(over, y)
+    y[0, 7, 7] = 255
+    assert torch.isfinite(lf(good, y))

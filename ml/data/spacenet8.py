@@ -173,11 +173,17 @@ class SN8Dataset:
         crop: int | None = None,
         augment: bool = False,
         seed: int = 0,
+        focus_classes: tuple[int, ...] = (),
+        focus_prob: float = 0.0,
     ) -> None:
         self.names = list(names)
         self.root = Path(root)
         self.crop = crop
         self.augment = augment
+        # Rare-class sampling: with probability ``focus_prob`` a crop is centred on a random
+        # pixel of ``focus_classes`` (when the tile has one), so flooded assets are seen often.
+        self.focus_classes = focus_classes
+        self.focus_prob = focus_prob
         self.rng = np.random.default_rng(seed)
         self._cache: dict[str, dict[str, np.ndarray]] = {}
 
@@ -207,6 +213,12 @@ class SN8Dataset:
         if self.crop:
             r = int(self.rng.integers(0, h - self.crop + 1))
             c = int(self.rng.integers(0, w - self.crop + 1))
+            if self.focus_classes and self.rng.random() < self.focus_prob:
+                rows, cols = np.nonzero(np.isin(y, self.focus_classes))
+                if rows.size:
+                    k = int(self.rng.integers(0, rows.size))
+                    r = int(np.clip(rows[k] - self.crop // 2, 0, h - self.crop))
+                    c = int(np.clip(cols[k] - self.crop // 2, 0, w - self.crop))
             x, y = (
                 x[:, r : r + self.crop, c : c + self.crop],
                 y[r : r + self.crop, c : c + self.crop],

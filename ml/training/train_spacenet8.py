@@ -41,6 +41,30 @@ def build(pretrained: bool = True) -> nn.Module:
     )
 
 
+class CEDiceLoss(nn.Module):
+    """Weighted cross-entropy + soft Dice over the foreground classes (1..C-1), ignore 255.
+    Dice counters the foreground over-prediction that a re-weighted CE alone produces."""
+
+    def __init__(self, weights: torch.Tensor, dice_weight: float = 1.0) -> None:
+        super().__init__()
+        self.ce = nn.CrossEntropyLoss(weight=weights, ignore_index=255)
+        self.dice_weight = dice_weight
+
+    def forward(self, logits: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        loss = self.ce(logits, y)
+        if not self.dice_weight:
+            return loss
+        valid = (y != 255).unsqueeze(1)
+        p = torch.softmax(logits, 1) * valid
+        onehot = nn.functional.one_hot(y.clamp(max=logits.shape[1] - 1), logits.shape[1])
+        onehot = onehot.permute(0, 3, 1, 2).float() * valid
+        dims = (0, 2, 3)
+        inter = (p * onehot).sum(dims)[1:]
+        denom = (p.sum(dims) + onehot.sum(dims))[1:]
+        dice = (2 * inter + 1) / (denom + 1)
+        return loss + self.dice_weight * (1 - dice.mean())
+
+
 def class_weights(ds: SN8Dataset) -> torch.Tensor:
     counts = np.zeros(len(CLASSES))
     for n in ds.names:
@@ -94,6 +118,8 @@ def main() -> None:
     ap.add_argument("--crop", type=int, default=512)
     ap.add_argument("--lr", type=float, default=3e-4)
     ap.add_argument("--patience", type=int, default=12)
+    ap.add_argument("--dice-weight", type=float, default=1.0)
+    ap.add_argument("--focus-prob", type=float, default=0.5)
     ap.add_argument("--no-mlflow", action="store_true")
     a = ap.parse_args()
     os.environ.setdefault("MLFLOW_DISABLE_AGENT_HINT", "1")
@@ -101,7 +127,15 @@ def main() -> None:
     device = select_device()
     split = json.loads((PROC / "split.json").read_text())["splits"]
     tiles = PROC / "tiles"
-    train = SN8Dataset(split["train"], tiles, crop=a.crop, augment=True, seed=a.seed)
+    train = SN8Dataset(
+        split["train"],
+        tiles,
+        crop=a.crop,
+        augment=True,
+        seed=a.seed,
+        focus_classes=(2, 4),
+        focus_prob=a.focus_prob,
+    )
     val = SN8Dataset(split["val"], tiles)
     test = SN8Dataset(split["test"], tiles)
     for d in (train, val, test):
@@ -109,7 +143,7 @@ def main() -> None:
             d.load(n)
     weights = class_weights(train)
     model = build().to(device)
-    loss_fn = nn.CrossEntropyLoss(weight=weights.to(device), ignore_index=255)
+    loss_fn = CEDiceLoss(weights.to(device), a.dice_weight)
     # 4 random crops per tile per epoch
     dl = DataLoader(
         torch.utils.data.ConcatDataset([train] * 4),
