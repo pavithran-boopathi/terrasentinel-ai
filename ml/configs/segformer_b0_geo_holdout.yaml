@@ -1,0 +1,12 @@
+# Phase 4: ImageNet-pretrained segformer_b0 on geo_holdout_v1; same data, crops, loss, schedule and early stopping as Phase 3.
+name: segformer-b0-geo-holdout
+arch: segformer_b0
+pretrained: true
+split_scheme: geo_holdout_v1
+eval_splits: [test]
+dropout: 0.1
+epochs: 80
+batch_size: 8
+lr: 0.0002
+crop: 256
+patience: 15

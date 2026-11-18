@@ -22,7 +22,8 @@ from torch.utils.data import DataLoader
 
 from ml.data.sen1floods11 import IGNORE_INDEX, NormStats, Sen1Floods11Dataset, load_splits_json
 from ml.evaluation.metrics import bootstrap_iou_ci, group_scores
-from ml.models.unet import UNet, count_parameters
+from ml.models.factory import build_model
+from ml.models.unet import count_parameters
 from ml.training.augment import train_transform
 from ml.training.config import TrainConfig
 from ml.training.engine import (
@@ -31,6 +32,7 @@ from ml.training.engine import (
     evaluate,
     seed_everything,
     select_device,
+    sweep_thresholds,
     train_one_epoch,
 )
 from ml.training.losses import BCEDiceLoss
@@ -116,7 +118,13 @@ def run(cfg: TrainConfig) -> dict[str, Any]:
         if k != "train"
     }
 
-    model = UNet(2, 1, cfg.base_channels, cfg.depth, cfg.dropout).to(device)
+    if cfg.arch == "unet":
+        model = build_model(
+            "unet", base_channels=cfg.base_channels, depth=cfg.depth, dropout=cfg.dropout
+        )
+    else:
+        model = build_model(cfg.arch, pretrained=cfg.pretrained, dropout=cfg.dropout)
+    model = model.to(device)
     loss_fn = BCEDiceLoss(cfg.bce_weight, cfg.dice_weight, pos_weight, IGNORE_INDEX).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
     steps = (
@@ -238,6 +246,18 @@ def run(cfg: TrainConfig) -> dict[str, Any]:
             "config": cfg.to_dict(),
             "splits": {},
         }
+        grid = [round(0.05 * i, 2) for i in range(1, 20)]
+        val_sweep = sweep_thresholds(model, eval_dl["val"], device, grid)
+        tuned = max(grid, key=lambda t: val_sweep[t]["iou"])
+        results["threshold"] = {
+            "default": cfg.threshold,
+            "val_tuned": tuned,
+            "val_sweep_iou": {str(t): v["iou"] for t, v in val_sweep.items()},
+        }
+        results["splits_tuned_threshold"] = {}
+        for name, dl in eval_dl.items():
+            mt, _ = evaluate(model, dl, device, threshold=tuned)
+            results["splits_tuned_threshold"][name] = mt
         for name, dl in eval_dl.items():
             m, acc = evaluate(model, dl, device, threshold=cfg.threshold, keep_per_chip=True)
             m["iou_ci95"] = bootstrap_iou_ci(

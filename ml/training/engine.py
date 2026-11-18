@@ -144,3 +144,33 @@ def benchmark_latency(
         "batch": shape[0],
         "device": device.type,
     }
+
+
+@torch.no_grad()
+def predict_probs(model: nn.Module, loader: Iterable, device: torch.device):
+    """Yield (probs (B,H,W) cpu float, target (B,H,W) cpu long, chips) batches."""
+    model.eval()
+    for batch in loader:
+        p = torch.sigmoid(model(batch["image"].to(device))[:, 0]).float().cpu()
+        yield p, batch["mask"], list(batch["chip"])
+
+
+def sweep_thresholds(
+    model: nn.Module, loader: Iterable, device: torch.device, thresholds: Iterable[float]
+) -> dict[float, dict[str, float]]:
+    """Pooled scores at each threshold from a single forward pass over ``loader``."""
+    from ml.evaluation.metrics import IGNORE_INDEX, scores
+
+    ts = [round(float(t), 3) for t in thresholds]
+    counts = {t: [0, 0, 0, 0] for t in ts}
+    for p, y, _ in predict_probs(model, loader, device):
+        valid = y != IGNORE_INDEX
+        pos = (y == 1) & valid
+        for t in ts:
+            pred = (p > t) & valid
+            c = counts[t]
+            c[0] += int((pred & pos).sum())
+            c[1] += int((pred & ~pos & valid).sum())
+            c[2] += int((~pred & pos).sum())
+            c[3] += int((~pred & ~pos & valid).sum())
+    return {t: scores(*c) for t, c in counts.items()}

@@ -44,6 +44,7 @@ ml = [
 ]
 # Phase 4+: pretrained transformers / TorchGeo models.
 ml-research = [
+  "segmentation-models-pytorch>=0.5",
   "transformers>=4.46",
   "torchgeo>=0.6",
 ]

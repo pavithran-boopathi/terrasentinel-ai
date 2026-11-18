@@ -20,6 +20,8 @@ class TrainConfig:
     eval_splits: list[str] = field(default_factory=lambda: ["test"])
     preload: bool = True
     # model
+    arch: str = "unet"  # unet | unet_resnet34 | segformer_b0 | segformer_b2
+    pretrained: bool = True
     base_channels: int = 32
     depth: int = 4
     dropout: float = 0.1

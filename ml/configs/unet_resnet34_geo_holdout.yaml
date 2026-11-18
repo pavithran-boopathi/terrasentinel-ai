@@ -1,0 +1,12 @@
+# Phase 4: ImageNet-pretrained unet_resnet34 on geo_holdout_v1; same data, crops, loss, schedule and early stopping as Phase 3.
+name: unet-resnet34-geo-holdout
+arch: unet_resnet34
+pretrained: true
+split_scheme: geo_holdout_v1
+eval_splits: [test]
+dropout: 0.1
+epochs: 80
+batch_size: 8
+lr: 0.0003
+crop: 256
+patience: 15

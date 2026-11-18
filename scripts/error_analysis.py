@@ -35,7 +35,7 @@ from ml.data.sen1floods11 import (  # noqa: E402
     normalize,
     read_chip,
 )
-from ml.models.unet import UNet  # noqa: E402
+from ml.models.factory import model_from_config  # noqa: E402
 from ml.training.engine import select_device  # noqa: E402
 
 RAW = REPO / "data/raw/sen1floods11"
@@ -76,7 +76,7 @@ def worst_chips_figure(run_dir: Path, split: str, k: int, out: Path) -> list[tup
     state = torch.load(run_dir / "best.pt", map_location="cpu", weights_only=False)
     cfg = state["config"]
     device = select_device()
-    model = UNet(2, 1, cfg["base_channels"], cfg["depth"], cfg["dropout"])
+    model = model_from_config(cfg)
     model.load_state_dict(state["model"])
     model.to(device).eval()
     stats = NormStats.from_json((PROC / f"norm_stats_{cfg['split_scheme']}.json").read_text())

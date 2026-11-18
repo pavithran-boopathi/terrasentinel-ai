@@ -29,7 +29,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
-      - run: pip install -e ".[api,geo,ml,dev]"
+      - run: pip install -e ".[api,geo,ml,ml-research,dev]"
       - run: pytest tests/geospatial tests/ml --cov=geospatial --cov=ml --cov-report=term-missing
 
   backend-postgres:

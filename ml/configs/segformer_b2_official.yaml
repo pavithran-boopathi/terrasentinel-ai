@@ -1,0 +1,12 @@
+# Phase 4: ImageNet-pretrained segformer_b2 on official; same data, crops, loss, schedule and early stopping as Phase 3.
+name: segformer-b2-official
+arch: segformer_b2
+pretrained: true
+split_scheme: official
+eval_splits: [test, bolivia]
+dropout: 0.1
+epochs: 80
+batch_size: 8
+lr: 0.0002
+crop: 256
+patience: 15
