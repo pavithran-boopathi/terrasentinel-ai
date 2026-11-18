@@ -13,6 +13,8 @@ import argparse
 import json
 from pathlib import Path
 
+import numpy as np
+
 
 def f(x: float) -> str:
     return "—" if x is None or x != x else f"{x:.3f}"
@@ -72,6 +74,21 @@ def main() -> None:
     for scheme, rows in tables.items():
         print(f"\n#### `{scheme}`\n\n{HEADER}")
         print("\n".join(rows))
+    by_cfg: dict[tuple[str, str], list[float]] = {}
+    for r in runs:
+        for s, v in r["splits"].items():
+            by_cfg.setdefault((r["config"]["name"], s), []).append(v["pooled"]["iou"])
+    if any(len(v) > 1 for v in by_cfg.values()):
+        print(
+            "\n#### Across seeds (pooled flood IoU)\n\n| Config | Split | Seeds | Mean | Std | Min | Max |"
+        )
+        print("|---|---|---|---|---|---|---|")
+        for (name, s), vals in sorted(by_cfg.items()):
+            a = np.array(vals)
+            print(
+                f"| {name} | {s} | {len(a)} | {a.mean():.3f} | {a.std(ddof=1) if len(a) > 1 else 0:.3f} "
+                f"| {a.min():.3f} | {a.max():.3f} |"
+            )
     for r in runs:
         m = r["meta"]
         lat = r["latency"]

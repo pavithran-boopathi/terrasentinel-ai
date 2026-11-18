@@ -29,7 +29,7 @@ pre/post imagery — served through a FastAPI + React application.
 - STAC client helper (Planetary Computer / Earth Search) for pulling a Sentinel-1 scene by bbox/date
 - Tests with tiny synthetic GeoTIFF fixtures (no network in CI)
 
-## Phase 3 — First model: U-Net baseline
+## Phase 3 — First model: U-Net baseline ✅ (2026-11-18, see EXPERIMENTS.md EXP-001)
 - Baselines first: Otsu threshold on VH dB, and a pixel-wise logistic regression / random forest
 - U-Net (ResNet-34 encoder, 2-channel input), loss = BCE + Dice (or Lovász) with ignore-index
 - Albumentations (flips, rot90, small affine, speckle-like noise), mixed precision where supported

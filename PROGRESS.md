@@ -1,5 +1,14 @@
 # Progress
 
+## 2026-11-18 — Phase 3 (baselines + U-Net) complete
+- Code: U-Net, BCE+Dice loss (ignore index), pooled + per-event metrics with chip-bootstrap CIs, training loop (early stopping, checkpoints with config/split hash/git state, MLflow), latency benchmark, 4 classical baselines, summary and error-analysis scripts
+- Experiments: 6 U-Net runs (2 split schemes × 3 seeds) + baselines — full tables in EXPERIMENTS.md (EXP-001)
+- Headline (pooled flood IoU, mean ± std over 3 seeds): official test **0.645 ± 0.007**, Bolivia **0.643 ± 0.083**, geo-holdout test **0.676 ± 0.040**; strongest baseline (gradient-boosted pixels) 0.639 / 0.438 / 0.664. Latency ≈ 19 ms per 512² chip on MPS
+- Honest takeaway: the U-Net matches a strong pixel baseline in-distribution and generalises better to Bolivia, but margins on held-out events are within noise; errors are mostly missed water (flooded vegetation, thin rivers)
+- Tests: **66 passed** (backend 21, geospatial 18, ml 27); ruff clean
+- Local only: checkpoints (`data/checkpoints/`), MLflow DB (`data/mlflow/`), logs (`data/logs/`) are git-ignored
+
+
 ## 2026-11-18 — Published to GitHub, CI green
 - Project moved to `~/Desktop/terrasentinel/terrasentinel-ai`; `.venv`, `node_modules` rebuilt; all tests re-run there
 - Public repo: https://github.com/pavithran-boopathi/terrasentinel-ai (pushed with approval)
