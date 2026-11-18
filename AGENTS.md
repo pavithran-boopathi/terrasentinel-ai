@@ -39,3 +39,4 @@ Read `PROJECT_PLAN.md`, `ARCHITECTURE.md` and the latest entry in `PROGRESS.md` 
 - ML: always load splits with `load_splits_json` and stats from `norm_stats_<scheme>.json`; never recompute stats on val/test. Training scripts need `if __name__ == "__main__":` (macOS DataLoader workers use spawn).
 - ML: fixed seeds, configs in `ml/configs/`, log to MLflow, splits written to disk and versioned by hash.
 - Commits: small, descriptive, conventional style (`feat(backend): ...`). Do not push without approval.
+- Commits and PRs are authored by the project owner only: **no `Co-Authored-By` trailers, no "Generated with" lines, no AI attribution** in commit messages or PR descriptions.

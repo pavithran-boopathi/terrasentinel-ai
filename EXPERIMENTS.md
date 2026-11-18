@@ -25,7 +25,7 @@ No results are recorded yet: no model has been trained.
 ## EXP-001 — Classical baselines vs. U-Net (from scratch), Sen1Floods11 S1 hand-labeled
 
 - **Date:** 2026-11-18
-- **Code:** U-Net runs at commit `d1c8708` (first run at `d2c099e`; ML code identical — `git diff d2c099e d1c8708 -- ml/` is empty). Runs flagged "dirty" had only `scripts/summarize_experiments.py` modified, not `ml/`.
+- **Code:** U-Net runs at commit `1a9aecf` (first run at `5024de1`; ML code identical — `git diff 5024de1 1a9aecf -- ml/` is empty). Runs flagged "dirty" had only `scripts/summarize_experiments.py` modified, not `ml/`. Commit messages were rewritten on 2026-11-18 (contents unchanged), so run metadata in `results.json` / MLflow records the earlier IDs: `d1c8708` = `1a9aecf`, `d2c099e` = `5024de1`.
 - **Configs:** `ml/configs/unet_official.yaml`, `ml/configs/unet_geo_holdout.yaml`; seeds 42, 1, 2
 - **MLflow:** experiment `sen1floods11-segmentation` in `data/mlflow/mlflow.db` (local)
 - **Data:** Sen1Floods11 v1.1 hand-labeled S1 (VV, VH dB). `official` split sha `0511f84471e9` (train 252 / val 89 / test 89 / Bolivia 15; Paraguay_34417 excluded — all-NaN S1). `geo_holdout_v1` sha `ae7f157c7f23` (train 289 / val 58 Pakistan+Spain / test 98 Bolivia+Mekong+Ghana).
