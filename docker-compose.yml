@@ -1,0 +1,64 @@
+# Local development stack. Requires Docker Desktop / OrbStack / Colima.
+# Usage: docker compose up --build   (API :8000, web :5173)
+name: terrasentinel
+
+x-backend-env: &backend-env
+  TS_ENVIRONMENT: development
+  TS_DATABASE_URL: postgresql+psycopg://terrasentinel:terrasentinel@db:5432/terrasentinel
+  TS_REDIS_URL: redis://redis:6379/0
+  TS_STORAGE_ROOT: /data/storage
+  TS_SECRET_KEY: ${TS_SECRET_KEY:?Set TS_SECRET_KEY in .env (>=32 chars)}
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: terrasentinel
+      POSTGRES_PASSWORD: terrasentinel
+      POSTGRES_DB: terrasentinel
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U terrasentinel"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["127.0.0.1:6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: { context: ., dockerfile: infrastructure/docker/backend.Dockerfile }
+    environment: *backend-env
+    ports: ["127.0.0.1:8000:8000"]
+    volumes: [storage:/data/storage]
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  worker:
+    build: { context: ., dockerfile: infrastructure/docker/backend.Dockerfile }
+    command: celery -A backend.workers.celery_app worker --loglevel=INFO --concurrency=1
+    environment: *backend-env
+    volumes: [storage:/data/storage]
+    depends_on:
+      redis: { condition: service_healthy }
+      api: { condition: service_healthy }
+    deploy:
+      resources:
+        limits: { memory: 6g }
+
+  web:
+    build: { context: ., dockerfile: infrastructure/docker/frontend.Dockerfile }
+    environment:
+      VITE_API_PROXY_TARGET: http://api:8000
+    ports: ["127.0.0.1:5173:5173"]
+    depends_on: [api]
+
+volumes:
+  pgdata:
+  storage:
