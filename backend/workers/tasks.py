@@ -68,7 +68,7 @@ def execute_analysis(job_id: str) -> dict[str, Any]:
         if not model_path.exists():
             raise PermanentJobError(f"model artifact missing: {model.artifact_uri}")
         prefix = f"outputs/{job.id}"
-        out_dir = storage.local_path(storage.uri(prefix))
+        out_dir = storage.workdir(prefix)
         last = {"p": 0.0}
 
         def progress(p: float) -> None:
@@ -111,6 +111,7 @@ def execute_analysis(job_id: str) -> dict[str, Any]:
                     [g for g in getattr(merged, "geoms", [merged]) if g.geom_type == "Polygon"]
                 )
             )
+        storage.commit_dir(prefix)
         job.summary = summary
         job.output_prefix = storage.uri(prefix)
         job.status = JobStatus.succeeded

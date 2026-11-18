@@ -33,7 +33,9 @@ class Settings(BaseSettings):
     celery_task_always_eager: bool = False
 
     # Object storage for imagery, masks and model weights (never stored in DB rows).
-    storage_root: Path = REPO_ROOT / "data" / "storage"
+    storage_backend: Literal["local", "s3"] = "local"
+    storage_root: Path = REPO_ROOT / "data" / "storage"  # local store, or S3 read/write cache
+    s3_bucket: str = ""
 
     # Uploads & inference.
     max_upload_mb: int = 1024

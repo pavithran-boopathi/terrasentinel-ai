@@ -32,8 +32,8 @@ OUTPUT_FILES = {
 def _files(job: AnalysisJob) -> list[str]:
     if not job.output_prefix:
         return []
-    base = get_storage().local_path(job.output_prefix)
-    return [f for f in OUTPUT_FILES if (base / f).exists()]
+    names = set(get_storage().list_names(job.output_prefix))
+    return [f for f in OUTPUT_FILES if f in names]
 
 
 def _read(job: AnalysisJob) -> dict[str, Any]:
@@ -109,7 +109,7 @@ def download_output(job_id: uuid.UUID, name: str, db: DbSession, user: CurrentUs
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown output")
     if name not in _files(job):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Output not available")
-    path = get_storage().local_path(job.output_prefix) / name
+    path = get_storage().local_path(f"{job.output_prefix}/{name}")
     return FileResponse(path, media_type=OUTPUT_FILES[name], filename=f"{job_id}_{name}")
 
 
@@ -189,7 +189,9 @@ def compute_exposure(
         crs = None
     rep = exposure_report(flood, b, r, ExposureParams(min_building_overlap), crs=crs)
     out = summary_only(rep)
-    base = get_storage().local_path(job.output_prefix)
+    storage = get_storage()
+    prefix = f"outputs/{job.id}"
+    base = storage.workdir(prefix)
     if "building_features" in rep:
         gj = features_to_geojson(
             rep["building_features"], ["flooded_fraction", "potentially_exposed"]
@@ -199,6 +201,7 @@ def compute_exposure(
         gj = features_to_geojson(rep["road_features"], ["flooded_length_m", "potentially_exposed"])
         (base / "exposed_roads.geojson").write_text(json.dumps(gj))
     (base / "exposure.json").write_text(json.dumps(out, default=float, indent=1))
+    storage.commit_dir(prefix)
     job.summary = {**(job.summary or {}), "exposure": out}
     db.commit()
     return out
@@ -217,7 +220,7 @@ def mask_preview_png(job_id: uuid.UUID, db: DbSession, user: CurrentUser) -> Res
     from geospatial.preview import mask_preview
 
     job = _succeeded(db, job_id, user)
-    png, _ = mask_preview(get_storage().local_path(job.output_prefix) / "flood_mask.tif")
+    png, _ = mask_preview(get_storage().local_path(f"{job.output_prefix}/flood_mask.tif"))
     return Response(png, media_type="image/png", headers={"Cache-Control": "private, max-age=3600"})
 
 
@@ -241,7 +244,7 @@ def report_pdf(job_id: uuid.UUID, db: DbSession, user: CurrentUser) -> Response:
     job = _succeeded(db, job_id, user)
     storage = get_storage()
     sar, _ = sar_preview(storage.local_path(job.image.storage_uri), max_size=900)
-    mask, _ = mask_preview(storage.local_path(job.output_prefix) / "flood_mask.tif", max_size=900)
+    mask, _ = mask_preview(storage.local_path(f"{job.output_prefix}/flood_mask.tif"), max_size=900)
     return Response(
         pdf_report(job, sar, mask),
         media_type="application/pdf",
