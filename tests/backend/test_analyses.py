@@ -257,3 +257,38 @@ def test_exposure_endpoint_on_finished_analysis(env, monkeypatch):
         client.post(f"{API}/analyses/{job['id']}/exposure", headers=h, files=bad).status_code == 422
     )
     assert client.post(f"{API}/analyses/{job['id']}/exposure", headers=h).status_code == 422
+
+
+def test_previews_and_reports(env):
+    client, sm, tmp = env
+    h = token(client)
+    register_tiny_model(sm, tmp)
+    img = upload(client, h, s1_bytes(tmp)).json()
+    assert len(img["bbox"]) == 4 and img["bbox"][0] < img["bbox"][2]
+    p = client.get(f"{API}/images/{img['id']}/preview.png", headers=h)
+    assert p.status_code == 200 and p.content[:8] == b"\x89PNG\r\n\x1a\n"
+    job = client.post(f"{API}/analyses", headers=h, json={"image_id": img["id"]}).json()
+    assert job["image_filename"] == "scene.tif" and job["model_name"] == "tiny:1"
+    m = client.get(f"{API}/analyses/{job['id']}/preview.png", headers=h)
+    assert m.status_code == 200 and m.content[:4] == b"\x89PNG"
+    csv_r = client.get(f"{API}/analyses/{job['id']}/report.csv", headers=h)
+    assert csv_r.status_code == 200 and "flooded_area_km2" in csv_r.text
+    pdf = client.get(f"{API}/analyses/{job['id']}/report.pdf", headers=h)
+    assert pdf.status_code == 200 and pdf.content[:5] == b"%PDF-"
+    other = token(client, "bo@example.com")
+    assert client.get(f"{API}/analyses/{job['id']}/report.pdf", headers=other).status_code == 404
+    assert client.get(f"{API}/images/{img['id']}/preview.png", headers=other).status_code == 404
+
+
+def test_experiments_endpoint(env, monkeypatch, tmp_path):
+    client, _, _ = env
+    h = token(client)
+    from backend.api.routes import experiments
+
+    monkeypatch.setattr(experiments, "SUMMARY", tmp_path / "missing.json")
+    assert client.get(f"{API}/experiments", headers=h).status_code == 404
+    f = tmp_path / "e.json"
+    f.write_text('{"sen1floods11": []}')
+    monkeypatch.setattr(experiments, "SUMMARY", f)
+    assert client.get(f"{API}/experiments", headers=h).json() == {"sen1floods11": []}
+    assert client.get(f"{API}/experiments").status_code == 401

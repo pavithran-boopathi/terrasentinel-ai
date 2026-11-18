@@ -36,6 +36,8 @@ api = [
   "rasterio>=1.4",
   "shapely>=2.0",
   "pyproj>=3.7",
+  "pillow>=10",
+  "matplotlib>=3.9",  # PDF reports
 ]
 # Deep learning stack. MPS-capable wheels on Apple Silicon; no CUDA-only deps.
 ml = [

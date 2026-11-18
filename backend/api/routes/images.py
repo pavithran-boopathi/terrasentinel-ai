@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from pathlib import PurePath
 
-from fastapi import APIRouter, HTTPException, UploadFile, status
+from fastapi import APIRouter, HTTPException, Response, UploadFile, status
 from shapely.geometry import shape
 from sqlalchemy import select
 
@@ -73,3 +73,13 @@ def get_image(image_id: uuid.UUID, db: DbSession, user: CurrentUser) -> Satellit
     if img is None or img.owner_id != user.id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Image not found")
     return img
+
+
+@router.get("/{image_id}/preview.png")
+def image_preview(image_id: uuid.UUID, db: DbSession, user: CurrentUser) -> Response:
+    """False-colour SAR preview warped to WGS84; place it on a map with ``ImageRead.bbox``."""
+    from geospatial.preview import sar_preview
+
+    img = get_image(image_id, db, user)
+    png, _ = sar_preview(get_storage().local_path(img.storage_uri))
+    return Response(png, media_type="image/png", headers={"Cache-Control": "private, max-age=3600"})

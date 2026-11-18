@@ -17,6 +17,7 @@ COPY backend ./backend
 COPY ml ./ml
 COPY geospatial ./geospatial
 COPY alembic.ini ./
+COPY docs/results ./docs/results
 RUN pip install --no-deps . && mkdir -p /data/storage && chown app:app /data/storage
 USER app
 EXPOSE 8000

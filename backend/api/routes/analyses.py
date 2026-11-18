@@ -5,7 +5,7 @@ import json
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, UploadFile, status
+from fastapi import APIRouter, HTTPException, Response, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 
@@ -38,6 +38,9 @@ def _files(job: AnalysisJob) -> list[str]:
 def _read(job: AnalysisJob) -> dict[str, Any]:
     out = AnalysisRead.model_validate(job).model_dump()
     out["files"] = _files(job)
+    out["image_filename"] = job.image.filename if job.image else None
+    mv = job.model_version
+    out["model_name"] = f"{mv.name}:{mv.version}" if mv else None
     return out
 
 
@@ -181,3 +184,48 @@ def compute_exposure(
     job.summary = {**(job.summary or {}), "exposure": out}
     db.commit()
     return out
+
+
+def _succeeded(db: DbSession, job_id: uuid.UUID, user: CurrentUser) -> AnalysisJob:
+    job = _owned(db, job_id, user)
+    if job.status != JobStatus.succeeded:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Analysis has not succeeded")
+    return job
+
+
+@router.get("/{job_id}/preview.png")
+def mask_preview_png(job_id: uuid.UUID, db: DbSession, user: CurrentUser) -> Response:
+    """Predicted flood water as a transparent PNG warped to WGS84 (same bbox as the image)."""
+    from geospatial.preview import mask_preview
+
+    job = _succeeded(db, job_id, user)
+    png, _ = mask_preview(get_storage().local_path(job.output_prefix) / "flood_mask.tif")
+    return Response(png, media_type="image/png", headers={"Cache-Control": "private, max-age=3600"})
+
+
+@router.get("/{job_id}/report.csv")
+def report_csv(job_id: uuid.UUID, db: DbSession, user: CurrentUser) -> Response:
+    from backend.services.reports import summary_csv
+
+    job = _succeeded(db, job_id, user)
+    return Response(
+        summary_csv(job),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{job_id}_summary.csv"'},
+    )
+
+
+@router.get("/{job_id}/report.pdf")
+def report_pdf(job_id: uuid.UUID, db: DbSession, user: CurrentUser) -> Response:
+    from backend.services.reports import pdf_report
+    from geospatial.preview import mask_preview, sar_preview
+
+    job = _succeeded(db, job_id, user)
+    storage = get_storage()
+    sar, _ = sar_preview(storage.local_path(job.image.storage_uri), max_size=900)
+    mask, _ = mask_preview(storage.local_path(job.output_prefix) / "flood_mask.tif", max_size=900)
+    return Response(
+        pdf_report(job, sar, mask),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{job_id}_report.pdf"'},
+    )

@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, field_serializer
+from pydantic import BaseModel, ConfigDict, computed_field, field_serializer
 from shapely.geometry import mapping
 
 from backend.models.registry import JobStatus
@@ -41,6 +41,11 @@ class ImageRead(BaseModel):
     footprint: Any
     created_at: datetime
 
+    @computed_field  # [west, south, east, north] in WGS84, for map image sources
+    @property
+    def bbox(self) -> list[float]:
+        return list(self.footprint.bounds)
+
     @field_serializer("footprint")
     def _geojson(self, g):  # shapely → GeoJSON dict
         return mapping(g) if g is not None else None
@@ -58,6 +63,8 @@ class AnalysisRead(BaseModel):
 
     id: uuid.UUID
     image_id: uuid.UUID
+    image_filename: str | None = None
+    model_name: str | None = None
     model_version_id: uuid.UUID
     status: JobStatus
     progress: float
