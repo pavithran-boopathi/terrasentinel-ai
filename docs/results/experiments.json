@@ -1877,5 +1877,120 @@
   ]
  },
  "latency": null,
- "spacenet8": []
+ "spacenet8": [
+  {
+   "run": "sn8-unet-resnet34-20261118-161533",
+   "best_epoch": 7,
+   "test": {
+    "pixel_iou": {
+     "background": 0.9275223145512552,
+     "building": 0.1847554310050065,
+     "flooded_building": 0.029396379603775113,
+     "road": 0.2376387271814482,
+     "flooded_road": 0.16824588832294135
+    },
+    "mean_iou_fg": 0.1550091065282928,
+    "object": {
+     "buildings_total": 909,
+     "building_detection_rate": 0.9306930693069307,
+     "flooded_building": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+     },
+     "road_centerline_detection_rate": 0.7590598695672489,
+     "flooded_road_length": {
+      "precision": 0.4560276786679641,
+      "recall": 0.5188456428676869,
+      "f1": 0.48541275851353993
+     }
+    },
+    "object_counts": {
+     "bld_total": 909,
+     "bld_detected": 846,
+     "bld_tp": 0,
+     "bld_fp": 2,
+     "bld_fn": 374,
+     "bld_tn": 481,
+     "road_px": 149809,
+     "road_detected_px": 113714,
+     "road_tp": 21089,
+     "road_fp": 25156,
+     "road_fn": 19557,
+     "road_tn": 84007
+    }
+   },
+   "val": {
+    "pixel_iou": {
+     "background": 0.9165305983809406,
+     "building": 0.3276556325033431,
+     "flooded_building": 0.027846500909838166,
+     "road": 0.09962404694417144,
+     "flooded_road": 0.07750187714685727
+    },
+    "mean_iou_fg": 0.13315701437605248,
+    "object": {
+     "buildings_total": 831,
+     "building_detection_rate": 0.9542719614921781,
+     "flooded_building": {
+      "precision": 0.3333333333333333,
+      "recall": 0.010869565217391304,
+      "f1": 0.021052631578947368
+     },
+     "road_centerline_detection_rate": 0.7073457896083952,
+     "flooded_road_length": {
+      "precision": 0.19946555819477435,
+      "recall": 0.5143950995405819,
+      "f1": 0.28746255883611466
+     }
+    },
+    "object_counts": {
+     "bld_total": 831,
+     "bld_detected": 793,
+     "bld_tp": 1,
+     "bld_fp": 2,
+     "bld_fn": 91,
+     "bld_tn": 706,
+     "road_px": 78140,
+     "road_detected_px": 55272,
+     "road_tp": 6718,
+     "road_fp": 26962,
+     "road_fn": 6342,
+     "road_tn": 38118
+    }
+   },
+   "baselines_test": {
+    "oracle_geometry_all_dry": {
+     "buildings_total": 909,
+     "building_detection_rate": 1.0,
+     "flooded_building": {
+      "precision": NaN,
+      "recall": 0.0,
+      "f1": 0.0
+     },
+     "road_centerline_detection_rate": 1.0,
+     "flooded_road_length": {
+      "precision": NaN,
+      "recall": 0.0,
+      "f1": 0.0
+     }
+    },
+    "oracle_geometry_all_flooded": {
+     "buildings_total": 909,
+     "building_detection_rate": 1.0,
+     "flooded_building": {
+      "precision": 0.41144114411441146,
+      "recall": 1.0,
+      "f1": 0.583008573655495
+     },
+     "road_centerline_detection_rate": 1.0,
+     "flooded_road_length": {
+      "precision": 0.2713188126214046,
+      "recall": 1.0,
+      "f1": 0.42683048489144415
+     }
+    }
+   }
+  }
+ ]
 }

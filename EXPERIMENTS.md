@@ -187,3 +187,24 @@ Per-event charts: `docs/figures/per_event_iou_*.png`.
 3. **Uncertainty is informative:** entropy separates misclassified from correct pixels with AUROC 0.82–0.88. Deferring the 10% most uncertain pixels raises IoU on the remainder from ≈ 0.65 to ≈ 0.76–0.81 — useful for routing pixels to human review.
 4. **MC dropout ≈ TTA** (AUROC within 0.01); TTA needs no dropout layers, so it applies to any architecture.
 
+## EXP-004 — Infrastructure flood attribution on SpaceNet 8 Germany (Phase 6)
+
+- **Date:** 2026-11-18 · **Data:** SpaceNet 8 `Germany_Training_Public` (202 tiles, 0.3–0.5 m Maxar RGB, pre + post; post warped to the pre grid). Spatial block split by tile-grid column: train 131 tiles / val 27 (cols 34–38) / test 44 (cols 39–45). Test has 909 buildings (41 % flooded) and 222 road segments (28 % of length flooded) — a higher flooded share than train.
+- **Run 1 (discarded, deleted):** 6-channel ResNet-34 U-Net, 5 classes, class-weighted CE. After 5 epochs it predicted **no** flooded pixels and over-predicted buildings/roads 2–4×. Stopped.
+- **Run 2 — end-to-end deep model** (`sn8-unet-resnet34-20261118-161533`, commit `689f064`): same model + flood-focused crop sampling (50 % of crops centred on a flooded pixel) + CE + foreground soft Dice; early-stopped at epoch 7/17 on val foreground mIoU.
+- **Object-level classifier** (`scripts/sn8_object_attribution.py`): assumes **known geometry** (as in the app, where footprints come from OSM). Per building (footprint + 3 m ring) / road segment (lane-buffered centreline + ring): 96 colour/change statistics from pre, post and post−pre; HistGradientBoosting (class-balanced); decision threshold chosen on the val block.
+
+| Method | Flooded-building F1 (P / R) | Flooded-building AUROC | Flooded-road F1, length-weighted (P / R) | Flooded-road AUROC |
+|---|---|---|---|---|
+| Trivial: everything flooded | 0.583 (0.411 / 1.000) | 0.5 | 0.433 (0.276 / 1.000) | 0.5 |
+| Deep end-to-end (geometry predicted) | 0.000 (0.000 / 0.000) | — | 0.485 (0.456 / 0.519) | — |
+| Object-level GBT (known geometry) | 0.512 (0.562 / 0.471) | 0.675 | **0.595** (0.737 / 0.499) | **0.869** |
+
+Deep model pixel IoU (test): building 0.185, flooded building 0.029, road 0.238, flooded road 0.168; building detection rate 0.931 (inflated by over-prediction — read with pixel IoU).
+
+### Findings
+1. **The end-to-end deep model did not learn building flood status** on 131 tiles (F1 0.000 on test) and segments buildings poorly (pixel IoU 0.18). This is a negative result, reported as such.
+2. **Roads:** given known centrelines, the object-level classifier is genuinely useful — F1 0.595 vs 0.433 (trivial) and 0.485 (deep), AUROC 0.869.
+3. **Buildings:** weak signal only (AUROC 0.675). Its F1 (0.512) is *below* the trivial "everything flooded" rule (0.583) because 41 % of test buildings are flooded and F1 rewards recall; the precision gain over the base rate (0.56 vs 0.41) is modest.
+4. **Implication for the product:** the app computes exposure from SAR flood extent ∩ OSM footprints (Phase 6 exposure API) rather than from this optical attribution model; SpaceNet 8 serves as an evaluation of how hard optical flood attribution is with little data. Scaling to Louisiana-East (approval needed, 4.2 GB) and a two-stage foundation → flood design (as in the SpaceNet 8 baseline) are the next steps.
+
