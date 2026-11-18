@@ -52,6 +52,10 @@ ml = [
 ml-research = [
   "segmentation-models-pytorch>=0.5",
   "transformers>=4.46",
+]
+# Optional: TorchGeo datasets/samplers. Not used by the pipeline (own Sen1Floods11 loader);
+# kept out of containers because its Lightning extras need jsonnet, which has no ARM64 wheel.
+torchgeo = [
   "torchgeo>=0.6",
 ]
 # Geospatial stack (rasterio/GDAL wheels bundle GDAL; no system GDAL needed).
