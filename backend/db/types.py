@@ -7,12 +7,15 @@ WKT so the same models work without SpatiaLite.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from shapely import wkb, wkt
 from shapely.geometry.base import BaseGeometry
 from sqlalchemy import Text
 from sqlalchemy.types import TypeDecorator, UserDefinedType
+
+_HEX = re.compile(r"[0-9A-Fa-f]+")
 
 
 class _PostGISGeometry(UserDefinedType):
@@ -29,11 +32,6 @@ class _PostGISGeometry(UserDefinedType):
         from sqlalchemy import func
 
         return func.ST_GeomFromEWKT(bindvalue)
-
-    def column_expression(self, col):
-        from sqlalchemy import func
-
-        return func.ST_AsEWKB(col)
 
 
 class Geometry(TypeDecorator):
@@ -65,6 +63,8 @@ class Geometry(TypeDecorator):
         if isinstance(value, bytes | memoryview):
             return wkb.loads(bytes(value))
         if isinstance(value, str):
+            if _HEX.fullmatch(value):  # PostGIS default output: hex-encoded EWKB
+                return wkb.loads(value, hex=True)
             text = value.split(";", 1)[1] if value.startswith("SRID=") else value
             return wkt.loads(text)
         raise TypeError(f"unexpected geometry value {type(value).__name__}")

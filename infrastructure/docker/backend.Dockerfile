@@ -17,7 +17,7 @@ COPY backend ./backend
 COPY ml ./ml
 COPY geospatial ./geospatial
 COPY alembic.ini ./
-RUN pip install --no-deps .
+RUN pip install --no-deps . && mkdir -p /data/storage && chown app:app /data/storage
 USER app
 EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=3s --retries=5 \
@@ -32,7 +32,7 @@ COPY backend ./backend
 COPY ml ./ml
 COPY geospatial ./geospatial
 COPY alembic.ini ./
-RUN pip install --no-deps .
+RUN pip install --no-deps . && mkdir -p /data/storage && chown app:app /data/storage
 ENV HF_HUB_OFFLINE=1
 USER app
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \

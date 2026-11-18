@@ -55,8 +55,11 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install -e ".[api]"
+      - run: pip install -e ".[api,dev]"
       - run: alembic upgrade head && alembic downgrade base && alembic upgrade head
+      - run: pytest tests/backend/test_storage_geometry.py
+        env:
+          TS_TEST_POSTGRES_URL: postgresql+psycopg://ts:ts@localhost:5432/ts
 
   frontend:
     runs-on: ubuntu-latest

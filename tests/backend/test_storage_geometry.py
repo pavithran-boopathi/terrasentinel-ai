@@ -44,6 +44,11 @@ def test_geometry_type_postgres_binds_ewkt_and_reads_wkb():
     poly = Polygon([(0, 0), (1, 0), (1, 1)])
     assert g.process_bind_param(poly, d) == f"SRID=4326;{poly.wkt}"
     assert g.process_result_value(poly.wkb, d).equals(poly)
+    # what psycopg actually returns for a geometry column: hex EWKB text (with SRID flag)
+    from shapely import to_wkb
+
+    ewkb_hex = to_wkb(poly, hex=True, include_srid=True)
+    assert g.process_result_value(ewkb_hex, d).equals(poly)
     assert "geometry(POLYGON, 4326)" in str(g.load_dialect_impl(d).compile(dialect=d))
 
 
@@ -58,3 +63,35 @@ def test_geometry_column_persists_on_sqlite(tmp_path):
         c.execute(t.insert(), {"id": 1, "geom": box(1, 2, 3, 4)})
         assert c.execute(text("select geom from g")).scalar().startswith("POLYGON")
         assert c.execute(t.select()).first().geom.bounds == (1, 2, 3, 4)
+
+
+@pytest.mark.skipif(
+    not __import__("os").environ.get("TS_TEST_POSTGRES_URL"),
+    reason="set TS_TEST_POSTGRES_URL to run against PostGIS",
+)
+def test_geometry_roundtrip_on_real_postgis():
+    import os
+
+    from sqlalchemy import Column, Integer, MetaData, Table, func, select
+
+    e = create_engine(os.environ["TS_TEST_POSTGRES_URL"])
+    md = MetaData()
+    t = Table(
+        "geom_roundtrip_test",
+        md,
+        Column("id", Integer, primary_key=True),
+        Column("geom", Geometry("POLYGON", 4326)),
+    )
+    with e.begin() as c:
+        c.exec_driver_sql("CREATE EXTENSION IF NOT EXISTS postgis")
+    md.drop_all(e)
+    md.create_all(e)
+    try:
+        poly = box(7.0, 50.5, 7.1, 50.6)
+        with e.begin() as c:
+            c.execute(t.insert(), {"id": 1, "geom": poly})
+            got = c.execute(select(t.c.geom)).scalar()
+            assert got.equals(poly)
+            assert c.execute(select(func.ST_SRID(t.c.geom))).scalar() == 4326
+    finally:
+        md.drop_all(e)
