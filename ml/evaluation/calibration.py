@@ -70,7 +70,7 @@ def fit_temperature(logits: np.ndarray, labels: np.ndarray, max_iter: int = 200)
         return loss
 
     opt.step(closure)
-    return float(log_t.exp())
+    return float(log_t.detach().exp())
 
 
 def subsample(arrays: list[np.ndarray], labels: list[np.ndarray], per_chip: int, seed: int = 0):
