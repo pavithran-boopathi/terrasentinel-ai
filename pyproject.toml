@@ -48,6 +48,7 @@ geo = [
   "geopandas>=1.0",
   "shapely>=2.0",
   "pyproj>=3.7",
+  "numpy>=1.26",
   "pystac-client>=0.8",
   "matplotlib>=3.9",
 ]
