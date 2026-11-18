@@ -169,6 +169,15 @@ export interface AnalysisSummary {
   pixels_valid: number;
   pixels_flooded: number;
   exposure?: Exposure;
+  change?: {
+    pre_water_km2: number;
+    post_water_km2: number;
+    new_water_km2: number;
+    receded_water_km2: number;
+    darkening_rule_km2: number;
+    agreement_new_water_vs_darkening: number;
+    note: string;
+  };
 }
 
 export type JobStatus = "queued" | "running" | "succeeded" | "failed";
@@ -287,11 +296,11 @@ export const resources = {
   },
   analyses: () => apiFetch<Analysis[]>("/analyses"),
   analysis: (id: string) => apiFetch<Analysis>(`/analyses/${id}`),
-  createAnalysis: (image_id: string, model_version_id?: string) =>
+  createAnalysis: (image_id: string, model_version_id?: string, pre_image_id?: string) =>
     apiFetch<Analysis>("/analyses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image_id, model_version_id }),
+      body: JSON.stringify({ image_id, model_version_id, pre_image_id }),
     }),
   exposure: (id: string, buildings: File | null, roads: File | null, minOverlap: number) => {
     const fd = new FormData();

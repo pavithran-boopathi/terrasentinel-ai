@@ -12,6 +12,7 @@ const FILES: [string, string][] = [
   ["files/flood_polygons.geojson", "Flood GeoJSON"],
   ["files/exposed_buildings.geojson", "Exposed buildings"],
   ["files/exposed_roads.geojson", "Exposed roads"],
+  ["files/new_water.tif", "New-water GeoTIFF"],
 ];
 
 export default function Reports() {

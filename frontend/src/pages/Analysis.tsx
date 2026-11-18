@@ -12,6 +12,7 @@ export default function Analysis() {
   const [file, setFile] = useState<File | null>(null);
   const [imageId, setImageId] = useState("");
   const [modelId, setModelId] = useState("");
+  const [preId, setPreId] = useState("");
   const [jobId, setJobId] = useState<string | null>(null);
 
   const upload = useMutation({
@@ -23,7 +24,7 @@ export default function Analysis() {
     },
   });
   const start = useMutation({
-    mutationFn: () => resources.createAnalysis(imageId, modelId || undefined),
+    mutationFn: () => resources.createAnalysis(imageId, modelId || undefined, preId || undefined),
     onSuccess: (job) => setJobId(job.id),
   });
   const job = useQuery({
@@ -88,6 +89,17 @@ export default function Analysis() {
               </label>
             )}
           </Card>
+          {!!imageId && (images.data?.length ?? 0) > 1 && (
+            <Card title="Optional · pre-event scene (change detection)">
+              <select className={`${select} w-full`} value={preId} onChange={(e) => setPreId(e.target.value)} aria-label="Pre-event scene">
+                <option value="">None — single-date analysis</option>
+                {images.data!.filter((i) => i.id !== imageId).map((i) => (
+                  <option key={i.id} value={i.id}>{i.filename}</option>
+                ))}
+              </select>
+              <p className="mt-2 text-xs text-slate-400">Warped onto the post-event grid; new water = water after and not before.</p>
+            </Card>
+          )}
           <Card title="2 · Model">
             {models.data?.length ? (
               <select className={`${select} w-full`} value={modelId} onChange={(e) => setModelId(e.target.value)} aria-label="Model">
@@ -131,6 +143,14 @@ export default function Analysis() {
                 <Stat label="Flooded share" value={`${fmt((s.flooded_fraction_of_valid ?? 0) * 100, 1)}%`} />
                 <Stat label="Inference" value={`${fmt(s.seconds, 2)} s`} hint={`${s.device} · ${s.model}`} />
               </div>
+              {s.change && (
+                <div className="grid gap-4 sm:grid-cols-4">
+                  <Stat label="New water" value={`${fmt(s.change.new_water_km2)} km²`} hint="after, not before" />
+                  <Stat label="Receded water" value={`${fmt(s.change.receded_water_km2)} km²`} />
+                  <Stat label="Pre-event water" value={`${fmt(s.change.pre_water_km2)} km²`} />
+                  <Stat label="Log-ratio rule" value={`${fmt(s.change.darkening_rule_km2)} km²`} hint={`agreement ${fmt(s.change.agreement_new_water_vs_darkening * 100, 0)}% (IoU)`} />
+                </div>
+              )}
               <p className="text-xs text-slate-500">
                 Predicted from SAR backscatter with threshold {s.threshold}. Next:{" "}
                 <Link to={`/impact?analysis=${job.data!.id}`} className="text-sky-400 hover:underline">
