@@ -61,7 +61,19 @@
 - `analysis_jobs` (status, progress, error, retries, input/output URIs) — Phase 5
 - `flood_polygons`, `exposed_assets` (PostGIS geometries) — Phase 6
 
+## Data pipeline (Sen1Floods11)
+```
+gs://sen1floods11 ──HTTPS+MD5──► data/raw/sen1floods11 ──prepare──► data/processed/sen1floods11
+                                   (MANIFEST.json)          │           splits/{official,geo_holdout_v1}.json (sha256)
+                                                            │           splits/loeo/<event>.json
+                                                            │           norm_stats_<scheme>.json (train only)
+                                                            └─► docs/data/sen1floods11_report.md
+Sen1Floods11Dataset: read S1 dB → clip [-50,5] → standardise → NaN→0 ; label -1 or S1 NaN → 255 (ignore)
+```
+Split files carry a hash of their chip lists; loading a modified file fails. Chips that fail validation
+(e.g. all-NaN S1) are excluded from every scheme and listed in the split metadata.
+
 ## Evaluation protocol (ML)
-- Official Sen1Floods11 splits plus a geographic hold-out (entire flood events unseen during training) to measure generalisation and avoid spatial leakage from neighbouring chips.
+- Report on both the official splits (comparability with literature; note 89 usable test chips) and `geo_holdout_v1` (entire events unseen during training and early stopping) to measure generalisation and avoid spatial leakage from neighbouring chips.
 - Normalisation statistics computed on the training split only.
 - Metrics on the flood class with nodata pixels ignored; report per-event results, not just pooled numbers.

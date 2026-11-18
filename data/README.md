@@ -14,7 +14,7 @@ data/
 
 | Dataset | Use | Source | License / access (verify before download) |
 |---|---|---|---|
-| Sen1Floods11 | S1 flood segmentation | github.com/cloudtostreet/Sen1Floods11 (GCS bucket) | to verify in Phase 2 |
+| Sen1Floods11 | S1 flood segmentation | github.com/cloudtostreet/Sen1Floods11 (`gs://sen1floods11`) | **No license declared** (checked 2026-11-18). Research use with citation; not redistributed. Downloaded: hand-labeled S1 + labels, 0.73 GB |
 | SpaceNet 8 | flooded roads/buildings | github.com/SpaceNetChallenge/SpaceNet8 (AWS S3) | to verify in Phase 6 |
 | xBD / xView2 | building damage | xview2.org (registration) | to verify in Phase 8; believed non-commercial |
 

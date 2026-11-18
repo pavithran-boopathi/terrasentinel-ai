@@ -49,6 +49,7 @@ geo = [
   "shapely>=2.0",
   "pyproj>=3.7",
   "pystac-client>=0.8",
+  "matplotlib>=3.9",
 ]
 dev = [
   "pytest>=8.3",
@@ -79,6 +80,7 @@ ignore = ["S101"]  # assert is fine in tests
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S105", "S106"]
+"scripts/**" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"

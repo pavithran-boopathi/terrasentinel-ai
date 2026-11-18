@@ -1,5 +1,35 @@
 # Progress
 
+## 2026-11-18 — Phase 2 (satellite data engineering) complete
+### Data
+- Sen1Floods11 v1.1 hand-labeled subset downloaded with approval: S1Hand, LabelHand, JRCWaterHand, S1OtsuLabelHand, split CSVs, metadata — 1,789 files, 706 MB, all MD5-verified (`scripts/download_sen1floods11.py`, manifest in `data/raw/sen1floods11/MANIFEST.json`)
+- License check: **none declared** (GitHub repo has no LICENSE; bucket and STAC catalog have no license field). Only a third-party HF mirror says CC-BY-4.0. Treated as research use with citation; data not redistributed
+- Sentinel-2 chips deliberately not downloaded (user choice)
+
+### Code
+- `geospatial/raster.py`: raster info, validation (structure, CRS, values, nodata), grid-alignment check, reprojection onto a reference grid, COG writer, footprint, pixel area (geodesic for EPSG:4326)
+- `geospatial/viz.py`: SAR false colour, mask overlay, nodata hatching
+- `geospatial/stac.py`: Sentinel-1 GRD search on Earth Search (live query verified: 3 scenes over Bolivia, Feb 2018)
+- `ml/data/sen1floods11.py`: chip index, official + event-holdout + leave-one-event-out splits, hashed split files with tamper detection, leakage checks, train-only normalisation, ignore-index encoding, PyTorch Dataset
+- `scripts/prepare_sen1floods11.py` → splits, norm stats, validation, quick-looks, [docs/data/sen1floods11_report.md](docs/data/sen1floods11_report.md)
+
+### Findings from the real data
+- **Paraguay_34417** (official *test*) has an all-NaN S1 chip while its label has ~50k water px → excluded everywhere; official test = 89 usable chips (not 90)
+- **Bolivia_233925** has 387 px below −50 dB (min −103.9) → handled by clipping to [−50, 5] dB
+- Official splits share all 10 non-Bolivia events between train/val/test → added `geo_holdout_v1` (test: Bolivia, Mekong, Ghana · val: Pakistan, Spain · train: 289 chips)
+- Water is 4.6–24.1% of labelled px per event; ignored px up to 33.9% (Ghana)
+
+### Tests (run 2026-11-18)
+- `pytest`: **49 passed** (backend 21, geospatial 18, ml 10 — all on synthetic rasters, no network); ruff clean
+- Real-data smoke test: geo_holdout_v1 train (289 chips) through DataLoader (4 workers) onto MPS in 22 s; normalised mean −0.005 / −0.005
+
+### Bugs found & fixed
+- `reproject_to_match` treated 0 as nodata for integer rasters without nodata, turning every "not water" pixel into water → never invent nodata for ints; explicit `dst_nodata` param; regression tests
+- DataLoader workers on macOS use `spawn` → training entry points need `if __name__ == "__main__":`
+
+### Next (Phase 3)
+Otsu + pixel-classifier baselines, then U-Net (BCE+Dice, ignore index 255) on `geo_holdout_v1` and `official`, MLflow tracking, real metrics into EXPERIMENTS.md. Consider caching chips as `.npy` if loading (≈22 s/epoch) becomes the bottleneck.
+
 ## 2026-11-18 — Docker runtime installed & full stack verified
 - Installed Colima 0.9.1 + Docker CLI 29.9 + Compose from conda-forge (no Homebrew/admin needed); VM 4 CPU / 8 GB / 60 GB
 - Fixed: conda-forge `limactl` lacked the macOS virtualization entitlement → ad-hoc signed (docs/docker-macos.md)

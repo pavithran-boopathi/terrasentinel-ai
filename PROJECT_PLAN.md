@@ -20,11 +20,11 @@ pre/post imagery — served through a FastAPI + React application.
 - Docker Compose (PostGIS, Redis, API, worker, web), GitHub Actions CI, env checker script
 - Docs: this plan, ARCHITECTURE, PROGRESS, EXPERIMENTS, AGENTS
 
-## Phase 2 — Satellite data engineering
-- Verify Sen1Floods11 license, layout and size; download the **hand-labeled** split only (approval required before download)
+## Phase 2 — Satellite data engineering ✅ (2026-11-18)
+- Verify Sen1Floods11 license, layout and size; download the **hand-labeled** split only (approval required before download) — done; no license declared, S1 + labels only (0.73 GB)
 - `geospatial/`: raster I/O (rasterio), CRS/transform validation, nodata handling, reprojection & alignment, COG writing, footprint → GeoJSON
 - `ml/data/`: Sen1Floods11 dataset class (VV/VH, dB scaling, per-band normalisation stats computed on train only), label handling (`-1` = no data → ignore index)
-- Reproducible splits: use the official split **and** a geographic hold-out split (by flood event/country)
+- Reproducible splits: official split **and** `geo_holdout_v1` (test: Bolivia, Mekong, Ghana; val: Pakistan, Spain), plus leave-one-event-out folds — done
 - Data validation report (shape, CRS, value ranges, class balance) + visualisation utilities
 - STAC client helper (Planetary Computer / Earth Search) for pulling a Sentinel-1 scene by bbox/date
 - Tests with tiny synthetic GeoTIFF fixtures (no network in CI)
