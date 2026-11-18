@@ -74,6 +74,10 @@ class AnalysisJob(TimestampMixin, Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
     image_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("satellite_images.id"), nullable=False)
+    # Optional pre-event scene for change detection (warped onto the post-event grid).
+    pre_image_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("satellite_images.id"), nullable=True
+    )
     model_version_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("model_versions.id"), nullable=False
     )
@@ -92,5 +96,8 @@ class AnalysisJob(TimestampMixin, Base):
     summary: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     flood_extent = mapped_column(Geometry("MULTIPOLYGON", 4326), nullable=True)
 
-    image: Mapped[SatelliteImage] = relationship(lazy="joined")
+    image: Mapped[SatelliteImage] = relationship(lazy="joined", foreign_keys=[image_id])
+    pre_image: Mapped[SatelliteImage | None] = relationship(
+        lazy="joined", foreign_keys=[pre_image_id]
+    )
     model_version: Mapped[ModelVersion] = relationship(lazy="joined")

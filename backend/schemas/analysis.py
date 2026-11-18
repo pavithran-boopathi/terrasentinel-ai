@@ -56,6 +56,7 @@ class AnalysisCreate(BaseModel):
 
     image_id: uuid.UUID
     model_version_id: uuid.UUID | None = None  # default model when omitted
+    pre_image_id: uuid.UUID | None = None  # optional pre-event scene → change detection
 
 
 class AnalysisRead(BaseModel):
@@ -65,6 +66,7 @@ class AnalysisRead(BaseModel):
     image_id: uuid.UUID
     image_filename: str | None = None
     model_name: str | None = None
+    pre_image_id: uuid.UUID | None = None
     model_version_id: uuid.UUID
     status: JobStatus
     progress: float

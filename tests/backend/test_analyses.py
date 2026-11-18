@@ -292,3 +292,25 @@ def test_experiments_endpoint(env, monkeypatch, tmp_path):
     monkeypatch.setattr(experiments, "SUMMARY", f)
     assert client.get(f"{API}/experiments", headers=h).json() == {"sen1floods11": []}
     assert client.get(f"{API}/experiments").status_code == 401
+
+
+def test_change_detection_with_pre_event_image(env):
+    client, sm, tmp = env
+    h = token(client)
+    register_tiny_model(sm, tmp)
+    post = upload(client, h, s1_bytes(tmp, name="post.tif")).json()
+    pre = upload(client, h, s1_bytes(tmp, name="pre.tif")).json()
+    r = client.post(
+        f"{API}/analyses", headers=h, json={"image_id": post["id"], "pre_image_id": pre["id"]}
+    )
+    assert r.status_code == 202, r.text
+    job = client.get(f"{API}/analyses/{r.json()['id']}", headers=h).json()
+    assert job["status"] == "succeeded", job["error"]
+    ch = job["summary"]["change"]
+    assert {"new_water_km2", "receded_water_km2", "darkening_rule_km2"} <= set(ch)
+    assert ch["new_water_km2"] == 0.0  # identical scenes → no change
+    assert "new_water.tif" in job["files"]
+    same = client.post(
+        f"{API}/analyses", headers=h, json={"image_id": post["id"], "pre_image_id": post["id"]}
+    )
+    assert same.status_code == 422

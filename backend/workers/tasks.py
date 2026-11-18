@@ -91,6 +91,15 @@ def execute_analysis(job_id: str) -> dict[str, Any]:
             batch=settings.inference_batch,
             progress=progress,
         )
+        if job.pre_image is not None:
+            summary["change"] = _change_detection(
+                predictor,
+                storage.local_path(job.pre_image.storage_uri),
+                image_path,
+                out_dir,
+                settings,
+            )
+            (out_dir / "summary.json").write_text(json.dumps(summary, indent=1))
         gj = json.loads((out_dir / "flood_polygons.geojson").read_text())
         polys = [shape(f["geometry"]) for f in gj["features"]]
         if polys:
@@ -115,6 +124,67 @@ def execute_analysis(job_id: str) -> dict[str, Any]:
             flooded_km2=round(summary["flooded_area_km2"], 3),
         )
         return summary
+
+
+def _change_detection(predictor, pre_path, post_path, out_dir, settings) -> dict[str, Any]:
+    """Warp the pre-event scene onto the post grid, segment it with the same model, and compare."""
+    import numpy as np
+    import rasterio
+    from rasterio.enums import Resampling
+
+    from geospatial.change import NODATA, darkening_mask, new_water, receded_water
+    from geospatial.raster import reproject_to_match, write_cog
+    from ml.inference.predictor import row_pixel_areas_m2
+
+    pre_dir = out_dir / "pre_event"
+    pre_dir.mkdir(exist_ok=True)
+    aligned = reproject_to_match(
+        pre_path, post_path, pre_dir / "pre_aligned.tif", resampling=Resampling.bilinear
+    )
+    predictor.run(
+        aligned,
+        pre_dir,
+        tile=settings.inference_tile,
+        overlap=settings.inference_overlap,
+        batch=settings.inference_batch,
+    )
+    with (
+        rasterio.open(out_dir / "flood_mask.tif") as post_m,
+        rasterio.open(pre_dir / "flood_mask.tif") as pre_m,
+        rasterio.open(aligned) as pre_img,
+        rasterio.open(post_path) as post_img,
+    ):
+        post_mask, pre_mask = post_m.read(1), pre_m.read(1)
+        nw, rc = new_water(pre_mask, post_mask), receded_water(pre_mask, post_mask)
+        dark = darkening_mask(pre_img.read().astype("float32"), post_img.read().astype("float32"))
+        write_cog(
+            nw,
+            out_dir / "new_water.tif",
+            crs=post_m.crs,
+            transform=post_m.transform,
+            nodata=NODATA,
+            descriptions=["new_water"],
+        )
+        area = row_pixel_areas_m2(post_m)[:, None]
+
+    def km2(mask: np.ndarray) -> float:
+        return float(((mask == 1) * area).sum() / 1e6)
+
+    for f in pre_dir.glob("*.tif"):
+        if f.name != "flood_mask.tif":
+            f.unlink()
+    return {
+        "pre_water_km2": km2(pre_mask),
+        "post_water_km2": km2(post_mask),
+        "new_water_km2": km2(nw),
+        "receded_water_km2": km2(rc),
+        "darkening_rule_km2": km2(dark),
+        "agreement_new_water_vs_darkening": float(
+            ((nw == 1) & (dark == 1)).sum() / max(1, ((nw == 1) | (dark == 1)).sum())
+        ),
+        "note": "new_water = model water after AND not before; darkening = VH drop ≥ 3 dB to "
+        "≤ −18 dB (unsupervised log-ratio rule)",
+    }
 
 
 def mark_failed(job_id: str, error: str) -> None:

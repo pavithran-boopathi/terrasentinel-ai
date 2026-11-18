@@ -25,6 +25,7 @@ OUTPUT_FILES = {
     "exposure.json": "application/json",
     "exposed_buildings.geojson": "application/geo+json",
     "exposed_roads.geojson": "application/geo+json",
+    "new_water.tif": "image/tiff",
 }
 
 
@@ -62,7 +63,24 @@ def create_analysis(payload: AnalysisCreate, db: DbSession, user: CurrentUser) -
         model = db.scalar(select(ModelVersion).where(ModelVersion.is_default.is_(True)))
     if model is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Model not found (no default registered)")
-    job = AnalysisJob(owner_id=user.id, image_id=img.id, model_version_id=model.id)
+    pre_id = None
+    if payload.pre_image_id:
+        pre = db.get(SatelliteImage, payload.pre_image_id)
+        if pre is None or pre.owner_id != user.id:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Pre-event image not found")
+        if pre.id == img.id:
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+                "Pre-event image must differ from the post-event image",
+            )
+        if not pre.footprint.intersects(img.footprint):
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT, "Pre- and post-event images do not overlap"
+            )
+        pre_id = pre.id
+    job = AnalysisJob(
+        owner_id=user.id, image_id=img.id, model_version_id=model.id, pre_image_id=pre_id
+    )
     db.add(job)
     db.commit()
     from backend.workers.tasks import run_flood_analysis
