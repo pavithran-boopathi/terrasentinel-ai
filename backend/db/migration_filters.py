@@ -16,6 +16,8 @@ def include_object(
 ) -> bool:
     if type_ == "table":
         return name in Base.metadata.tables
+    if type_ == "index" and name and name.endswith("_gist"):
+        return False  # spatial indexes are created by hand in migrations (PostgreSQL only)
     table = getattr(obj, "table", None)
     if table is not None and type_ in {
         "index",

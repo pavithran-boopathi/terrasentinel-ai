@@ -35,6 +35,15 @@ class Settings(BaseSettings):
     # Object storage for imagery, masks and model weights (never stored in DB rows).
     storage_root: Path = REPO_ROOT / "data" / "storage"
 
+    # Uploads & inference.
+    max_upload_mb: int = 1024
+    max_image_pixels: int = 400_000_000
+    inference_device: str = "auto"  # auto | cpu | mps | cuda
+    inference_tile: int = 512
+    inference_overlap: int = 64
+    inference_batch: int = 4
+    job_max_retries: int = 2
+
     # Auth.
     secret_key: str = Field(default="", repr=False)
     access_token_expire_minutes: int = 60

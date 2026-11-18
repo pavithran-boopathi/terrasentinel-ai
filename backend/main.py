@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend import __version__
-from backend.api.routes import auth, health
+from backend.api.routes import analyses, auth, health, images, models, monitoring
 from backend.core.config import get_settings
 from backend.core.logging import configure_logging, get_logger
 
@@ -53,7 +53,8 @@ def create_app() -> FastAPI:
         return response
 
     app.include_router(health.router, prefix=settings.api_prefix)
-    app.include_router(auth.router, prefix=settings.api_prefix)
+    for r in (auth, images, models, analyses, monitoring):
+        app.include_router(r.router, prefix=settings.api_prefix)
     return app
 
 

@@ -30,6 +30,12 @@ api = [
   "pwdlib[argon2]>=0.2,<1",
   "python-multipart>=0.0.18",
   "email-validator>=2.2",
+  # upload validation / footprints / exposure overlays run in the API process
+  "numpy>=1.26",
+  "geopandas>=1.0",
+  "rasterio>=1.4",
+  "shapely>=2.0",
+  "pyproj>=3.7",
 ]
 # Deep learning stack. MPS-capable wheels on Apple Silicon; no CUDA-only deps.
 ml = [

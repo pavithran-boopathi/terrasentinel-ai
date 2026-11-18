@@ -33,7 +33,7 @@ services:
       retries: 10
 
   api:
-    build: { context: ., dockerfile: infrastructure/docker/backend.Dockerfile }
+    build: { context: ., dockerfile: infrastructure/docker/backend.Dockerfile, target: api }
     environment: *backend-env
     ports: ["127.0.0.1:8000:8000"]
     volumes: [storage:/data/storage]
@@ -42,13 +42,7 @@ services:
       redis: { condition: service_healthy }
 
   worker:
-    build: { context: ., dockerfile: infrastructure/docker/backend.Dockerfile }
-    command: celery -A backend.workers.celery_app worker --loglevel=INFO --concurrency=1
-    healthcheck:
-      test: ["CMD-SHELL", "celery -A backend.workers.celery_app inspect ping -d celery@$$HOSTNAME --timeout 5"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    build: { context: ., dockerfile: infrastructure/docker/backend.Dockerfile, target: worker }
     environment: *backend-env
     volumes: [storage:/data/storage]
     depends_on:
