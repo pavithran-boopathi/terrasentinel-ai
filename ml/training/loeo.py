@@ -109,6 +109,7 @@ def main() -> None:
     out = REPO / "data/checkpoints" / f"loeo-{a.arch}-{time.strftime('%Y%m%d-%H%M%S')}"
     out.mkdir(parents=True)
     folds = []
+    git = git_state()  # captured once, at start
     for ev in events:
         r = run_fold(ev, a.arch, a.epochs, a.seed, device)
         folds.append(r)
@@ -123,7 +124,7 @@ def main() -> None:
                     "arch": a.arch,
                     "epochs": a.epochs,
                     "seed": a.seed,
-                    "git": git_state(),
+                    "git": git,
                     "device": device.type,
                     "folds": folds,
                 },

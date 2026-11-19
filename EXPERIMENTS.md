@@ -208,3 +208,44 @@ Deep model pixel IoU (test): building 0.185, flooded building 0.029, road 0.238,
 3. **Buildings:** weak signal only (AUROC 0.675). Its F1 (0.512) is *below* the trivial "everything flooded" rule (0.583) because 41 % of test buildings are flooded and F1 rewards recall; the precision gain over the base rate (0.56 vs 0.41) is modest.
 4. **Implication for the product:** the app computes exposure from SAR flood extent ∩ OSM footprints (Phase 6 exposure API) rather than from this optical attribution model; SpaceNet 8 serves as an evaluation of how hard optical flood attribution is with little data. Scaling to Louisiana-East (approval needed, 4.2 GB) and a two-stage foundation → flood design (as in the SpaceNet 8 baseline) are the next steps.
 
+## EXP-005 — Leave-one-event-out cross-validation (Phase 8)
+
+- **Date:** 2026-11-18 · **Script:** `python -m ml.training.loeo --arch unet_resnet34 --epochs 35` (code `d52dad8`; `ml/training/loeo.py` and its imports unchanged during the run — the `git` field in its results.json shows a later HEAD because it was captured at write time, fixed since) · run `loeo-unet_resnet34-20261118-161434`
+- **Protocol:** 11 folds, one per flood event; train on all chips of the other 10 events, test on every chip of the held-out event. **Fixed 35-epoch budget, no validation-based model selection** (chosen from Phase 3/4 best epochs), so the held-out event never influences training. Normalisation statistics and pos_weight recomputed from each fold's training chips. Same fold → gradient-boosted pixel baseline for comparison. Seed 42, MPS.
+
+| Held-out event | Train chips | Test chips | U-Net ResNet-34 IoU [95% CI] | Pixel GBT IoU |
+|---|---|---|---|---|
+| Bolivia | 430 | 15 | 0.689 [0.501, 0.786] | 0.451 |
+| Ghana | 392 | 53 | 0.577 [0.447, 0.719] | 0.382 |
+| India | 377 | 68 | 0.554 [0.446, 0.638] | 0.510 |
+| Mekong | 415 | 30 | 0.833 [0.722, 0.892] | 0.823 |
+| Nigeria | 427 | 18 | 0.782 [0.611, 0.854] | 0.646 |
+| Pakistan | 417 | 28 | 0.274 [0.137, 0.392] | 0.292 |
+| Paraguay | 379 | 66 | 0.484 [0.368, 0.589] | 0.551 |
+| Somalia | 419 | 26 | 0.278 [0.156, 0.412] | 0.223 |
+| Spain | 415 | 30 | 0.732 [0.605, 0.821] | 0.724 |
+| Sri-Lanka | 403 | 42 | 0.610 [0.354, 0.764] | 0.531 |
+| USA | 376 | 69 | 0.520 [0.404, 0.620] | 0.542 |
+| **Mean ± std over events** | | | **0.576 ± 0.184** | 0.516 ± 0.177 |
+
+### Findings
+1. Across unseen events the deep model averages **0.576 IoU** vs **0.516** for the pixel baseline and wins on **8 / 11** events — but the event-to-event spread (std 0.184, range 0.27–0.83) dwarfs every architecture difference in EXP-002.
+2. **Hardest events:** Pakistan (0.27) and Somalia (0.28) — where the pixel baseline is about as good: little the deep model learned from other events transfers. **Easiest:** Mekong (0.83), where large open water is unambiguous in SAR.
+3. Mean IoU over folds (each event weighted equally) is lower than pooled IoU on mixed test sets (EXP-001/002), which is dominated by water-rich events. Both are reported; for deployment to a *new* flood, the LOEO number is the honest expectation.
+
+## EXP-006 — Inference latency (Phase 10)
+
+- **Date:** 2026-11-18 · **Script:** `scripts/benchmark_latency.py` → `docs/results/latency.json` · arm64, torch 2.15.0, nothing else running. Forward pass on 512×512×2, synchronised, 10 warm-up + 50 (bs 1) / 15 (bs 8) timed iterations; random weights (latency does not depend on weights).
+
+| Model | Params | MPS bs1 ms/chip | MPS bs8 ms/chip | CPU bs1 ms/chip | CPU bs8 ms/chip |
+|---|---|---|---|---|---|
+| U-Net (scratch) | 7.8M | 18.4 | 17.4 | 307 | 190 |
+| U-Net ResNet-34 | 24.4M | 14.4 | 9.3 | 188 | 116 |
+| SegFormer-B0 | 3.7M | 9.3 | 8.4 | 329 | 158 |
+| SegFormer-B2 | 27.3M | 33.0 | 33.0 | 1172 | 744 |
+
+- Tiled inference, 4096×4096 scene (≈ 1,678 km² at 10 m), 512 px tiles, 64 px overlap, batch 8, MPS: U-Net (scratch) 2.62 s (640 km²/s); SegFormer-B0 1.27 s (1,322 km²/s)
+
+- **SegFormer-B0 is the efficiency sweet spot:** fastest on MPS (9.3 ms/chip), fewest parameters (3.7 M), and the best Bolivia IoU in EXP-002. SegFormer-B2 is 3.5× slower on MPS and ~3.6× slower than B0 on CPU for a +0.006 official-test IoU gain.
+- CPU numbers are what the Docker worker sees (no GPU in containers on macOS); end-to-end CPU jobs also include I/O, validation and vectorisation (e.g. 2.3 s for one 512² chip with SegFormer-B2 in Docker).
+

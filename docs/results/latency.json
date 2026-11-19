@@ -1,0 +1,245 @@
+{
+ "device": "mps",
+ "machine": "arm64",
+ "processor": "arm",
+ "torch": "2.15.0",
+ "rows": [
+  {
+   "arch": "unet",
+   "device": "mps",
+   "batch": 1,
+   "params": 7762753,
+   "ms_per_batch": 18.361891599925002,
+   "ms_per_chip": 18.361891599925002,
+   "p95_ms_per_batch": 19.516218750868575
+  },
+  {
+   "arch": "unet",
+   "device": "mps",
+   "batch": 8,
+   "params": 7762753,
+   "ms_per_batch": 139.516491733472,
+   "ms_per_chip": 17.439561466684,
+   "p95_ms_per_batch": 139.9872462003259
+  },
+  {
+   "arch": "unet_resnet34",
+   "device": "mps",
+   "batch": 1,
+   "params": 24433233,
+   "ms_per_batch": 14.350230899872258,
+   "ms_per_chip": 14.350230899872258,
+   "p95_ms_per_batch": 14.864556249449379
+  },
+  {
+   "arch": "unet_resnet34",
+   "device": "mps",
+   "batch": 8,
+   "params": 24433233,
+   "ms_per_batch": 74.276616799519,
+   "ms_per_chip": 9.284577099939876,
+   "p95_ms_per_batch": 74.79456689979997
+  },
+  {
+   "arch": "segformer_b0",
+   "device": "mps",
+   "batch": 1,
+   "params": 3712833,
+   "ms_per_batch": 9.268549220141722,
+   "ms_per_chip": 9.268549220141722,
+   "p95_ms_per_batch": 9.606910349612008
+  },
+  {
+   "arch": "segformer_b0",
+   "device": "mps",
+   "batch": 8,
+   "params": 3712833,
+   "ms_per_batch": 67.46159446677969,
+   "ms_per_chip": 8.43269930834746,
+   "p95_ms_per_batch": 68.15528319893929
+  },
+  {
+   "arch": "segformer_b2",
+   "device": "mps",
+   "batch": 1,
+   "params": 27344257,
+   "ms_per_batch": 33.01927672007878,
+   "ms_per_chip": 33.01927672007878,
+   "p95_ms_per_batch": 33.170714949665125
+  },
+  {
+   "arch": "segformer_b2",
+   "device": "mps",
+   "batch": 8,
+   "params": 27344257,
+   "ms_per_batch": 264.0524252007405,
+   "ms_per_chip": 33.006553150092564,
+   "p95_ms_per_batch": 264.3284001998836
+  }
+ ],
+ "all_rows": [
+  {
+   "arch": "unet",
+   "device": "mps",
+   "batch": 1,
+   "params": 7762753,
+   "ms_per_batch": 18.361891599925002,
+   "ms_per_chip": 18.361891599925002,
+   "p95_ms_per_batch": 19.516218750868575
+  },
+  {
+   "arch": "unet",
+   "device": "mps",
+   "batch": 8,
+   "params": 7762753,
+   "ms_per_batch": 139.516491733472,
+   "ms_per_chip": 17.439561466684,
+   "p95_ms_per_batch": 139.9872462003259
+  },
+  {
+   "arch": "unet",
+   "device": "cpu",
+   "batch": 1,
+   "params": 7762753,
+   "ms_per_batch": 307.4281291998341,
+   "ms_per_chip": 307.4281291998341,
+   "p95_ms_per_batch": 312.25397484995483
+  },
+  {
+   "arch": "unet",
+   "device": "cpu",
+   "batch": 8,
+   "params": 7762753,
+   "ms_per_batch": 1520.9820498663855,
+   "ms_per_chip": 190.1227562332982,
+   "p95_ms_per_batch": 1584.1638211000827
+  },
+  {
+   "arch": "unet_resnet34",
+   "device": "mps",
+   "batch": 1,
+   "params": 24433233,
+   "ms_per_batch": 14.350230899872258,
+   "ms_per_chip": 14.350230899872258,
+   "p95_ms_per_batch": 14.864556249449379
+  },
+  {
+   "arch": "unet_resnet34",
+   "device": "mps",
+   "batch": 8,
+   "params": 24433233,
+   "ms_per_batch": 74.276616799519,
+   "ms_per_chip": 9.284577099939876,
+   "p95_ms_per_batch": 74.79456689979997
+  },
+  {
+   "arch": "unet_resnet34",
+   "device": "cpu",
+   "batch": 1,
+   "params": 24433233,
+   "ms_per_batch": 187.97735416010255,
+   "ms_per_chip": 187.97735416010255,
+   "p95_ms_per_batch": 192.8853272998822
+  },
+  {
+   "arch": "unet_resnet34",
+   "device": "cpu",
+   "batch": 8,
+   "params": 24433233,
+   "ms_per_batch": 925.7447499335589,
+   "ms_per_chip": 115.71809374169486,
+   "p95_ms_per_batch": 937.7287377014
+  },
+  {
+   "arch": "segformer_b0",
+   "device": "mps",
+   "batch": 1,
+   "params": 3712833,
+   "ms_per_batch": 9.268549220141722,
+   "ms_per_chip": 9.268549220141722,
+   "p95_ms_per_batch": 9.606910349612008
+  },
+  {
+   "arch": "segformer_b0",
+   "device": "mps",
+   "batch": 8,
+   "params": 3712833,
+   "ms_per_batch": 67.46159446677969,
+   "ms_per_chip": 8.43269930834746,
+   "p95_ms_per_batch": 68.15528319893929
+  },
+  {
+   "arch": "segformer_b0",
+   "device": "cpu",
+   "batch": 1,
+   "params": 3712833,
+   "ms_per_batch": 329.37327667961654,
+   "ms_per_chip": 329.37327667961654,
+   "p95_ms_per_batch": 350.5110401009006
+  },
+  {
+   "arch": "segformer_b0",
+   "device": "cpu",
+   "batch": 8,
+   "params": 3712833,
+   "ms_per_batch": 1265.4146555995492,
+   "ms_per_chip": 158.17683194994365,
+   "p95_ms_per_batch": 1279.1221287992812
+  },
+  {
+   "arch": "segformer_b2",
+   "device": "mps",
+   "batch": 1,
+   "params": 27344257,
+   "ms_per_batch": 33.01927672007878,
+   "ms_per_chip": 33.01927672007878,
+   "p95_ms_per_batch": 33.170714949665125
+  },
+  {
+   "arch": "segformer_b2",
+   "device": "mps",
+   "batch": 8,
+   "params": 27344257,
+   "ms_per_batch": 264.0524252007405,
+   "ms_per_chip": 33.006553150092564,
+   "p95_ms_per_batch": 264.3284001998836
+  },
+  {
+   "arch": "segformer_b2",
+   "device": "cpu",
+   "batch": 1,
+   "params": 27344257,
+   "ms_per_batch": 1172.251232540002,
+   "ms_per_chip": 1172.251232540002,
+   "p95_ms_per_batch": 1190.1091518988324
+  },
+  {
+   "arch": "segformer_b2",
+   "device": "cpu",
+   "batch": 8,
+   "params": 27344257,
+   "ms_per_batch": 5951.333716733643,
+   "ms_per_chip": 743.9167145917054,
+   "p95_ms_per_batch": 6068.360841301546
+  }
+ ],
+ "tiled": [
+  {
+   "arch": "unet",
+   "scene_px": "4096x4096",
+   "tile": 512,
+   "overlap": 64,
+   "seconds": 2.62006399999882,
+   "km2_per_second_at_10m": 640.3361139272765
+  },
+  {
+   "arch": "segformer_b0",
+   "scene_px": "4096x4096",
+   "tile": 512,
+   "overlap": 64,
+   "seconds": 1.2686998750032217,
+   "km2_per_second_at_10m": 1322.3943921297696
+  }
+ ],
+ "date": "2026-11-18"
+}

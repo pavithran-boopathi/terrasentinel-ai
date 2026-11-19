@@ -37,39 +37,39 @@ pre/post imagery — served through a FastAPI + React application.
 - Evaluation on held-out test + Bolivia hold-out: IoU, Dice, precision, recall, F1, latency (MPS/CPU)
 - Results → `EXPERIMENTS.md`, model card in `docs/models/`
 
-## Phase 4 — SegFormer
+## Phase 4 — SegFormer ✅ (EXP-002)
 - Fine-tune SegFormer (MiT-b0/b1, Hugging Face) with adapted 2-channel stem; same splits, losses, metrics
 - Paired comparison vs U-Net (per-chip IoU, bootstrap CIs), parameter count, latency, memory
 - Decide serving default from evidence
 
-## Phase 5 — Production inference
+## Phase 5 — Production inference ✅
 - Sliding-window tiled inference with overlap + cosine/Hann blending, arbitrary-size GeoTIFF in → georeferenced COG mask out
 - Model registry table (name, version, metrics, artifact URI, checksum); TorchScript/ONNX export where it pays off
 - Upload API (size/type/CRS validation, streaming to storage), `analysis_jobs` table, Celery task with retries, progress reporting, failure recovery
 - Polygonised flood extent stored in PostGIS
 
-## Phase 6 — Geospatial intelligence (SpaceNet 8)
+## Phase 6 — Geospatial intelligence (SpaceNet 8) ✅ (EXP-004; Germany only)
 - Ingest SpaceNet 8 building footprints + road network (verify license and S3 access first)
 - Road/building segmentation model **or** use labelled/OSM vectors where models are not justified — document the choice
 - Exposure analysis: spatial joins of buildings/roads with flood polygons in PostGIS (counts, km of road, % area), in a projected equal-area CRS
 - Evaluate against SpaceNet 8 flooded/non-flooded labels
 
-## Phase 7 — Interactive web application
+## Phase 7 — Interactive web application ✅
 - Explorer: imagery tiles (COG via TiTiler or pre-rendered), Deck.gl overlays, region selection, before/after swipe
 - Analysis: upload → model choice → job progress → results; Impact page; Model Lab charts (Plotly) from API; Reports (PDF, GeoJSON, GeoTIFF, CSV)
 
-## Phase 8 — Advanced research
+## Phase 8 — Advanced research ✅ (EXP-003, EXP-005; xBD pipeline built, not trained)
 - Geographic generalisation: leave-one-event-out CV
 - Uncertainty: MC dropout / test-time augmentation; calibration (ECE, reliability diagrams, temperature scaling)
 - Multitemporal change detection (pre/post SAR differencing vs learned model)
 - xBD building damage model (Siamese / two-stream), evaluated separately (xBD license is non-commercial — check)
 - Error analysis by land cover, event, and label quality
 
-## Phase 9 — MLOps & cloud (optional, needs approval for any paid resource)
+## Phase 9 — MLOps & cloud ✅ (Terraform validated, not applied)
 - MLflow model registry, CI for model smoke tests, Prometheus-style metrics, CloudWatch-ready logs
 - Terraform for S3 + ECS (Fargate) + RDS PostGIS + ElastiCache; GPU training on a spot instance — **plan only until approved**
 
-## Phase 10 — Final evaluation
+## Phase 10 — Final evaluation ✅ (EXP-006, README, docs/)
 - Benchmark table, failure-case gallery, architecture diagram, demo script, evidence-backed resume bullets
 
 ## Compute strategy
@@ -78,3 +78,10 @@ pre/post imagery — served through a FastAPI + React application.
 | Data prep, unit tests, small training runs | Mac (M5 Pro, 24 GB, MPS) | batch 4–8 at 512², subsets |
 | Full U-Net / SegFormer training | Mac first; cloud GPU if too slow | same script, `--device cuda` |
 | xBD damage model (large) | Cloud GPU likely | decide after Phase 4 timings |
+
+## Not done / future work (honest list)
+- xBD damage model: pipeline + metric built and tested on synthetic data; **training requires the user to download xBD** (registration, non-commercial license): `python -m ml.training.train_xbd --test-disasters ... --val-disasters ...`
+- SpaceNet 8 Louisiana-East (4.2 GB, not approved/downloaded); two-stage foundation → flood model
+- Calibrators with a bias term (Platt / isotonic) — temperature scaling proved insufficient (EXP-003)
+- Tile server (TiTiler) for very large scenes in the web map; currently PNG previews ≤ 1024 px
+- AWS deployment (`terraform apply`) — owner decision, costs money

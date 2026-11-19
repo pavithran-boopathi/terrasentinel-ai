@@ -1,5 +1,33 @@
 # Progress
 
+## 2026-11-18 — Phases 4–10 complete (project finished)
+### Delivered
+- **Phase 4:** ImageNet ResNet-34 U-Net, SegFormer-B0/B2 (2-band stem adaptation), val-tuned threshold; 18 runs (3 models × 2 splits × 3 seeds) → EXP-002. Serving model `flood-segformer-b2:1` selected by validation IoU and registered.
+- **Phase 5:** seamless tiled inference, COG/GeoJSON outputs, model registry, validated uploads, Celery jobs (progress, retries, permanent failures, stale-job recovery), monitoring, PostGIS geometry + GiST; verified end to end in Docker.
+- **Phase 6:** exposure API (buildings/roads in local UTM — potential exposure, not damage); SpaceNet 8 Germany preprocessing/split/metrics; deep model (negative result) + object-level classifier → EXP-004.
+- **Phase 7:** React app wired to the API — Dashboard, Explorer (before/after), AI Analysis (incl. pre-event change detection), Disaster Impact, Model Lab (Plotly, results JSON), Reports (PDF/CSV/COG/GeoJSON). Checked in the browser.
+- **Phase 8:** calibration + MC dropout/TTA uncertainty (EXP-003), leave-one-event-out CV (EXP-005), SAR change detection, xBD damage pipeline (synthetic-data tested, **not trained**).
+- **Phase 9:** S3 storage backend (moto-tested), Terraform AWS stack (`terraform validate` passes, **not applied**), CI jobs for Docker builds and Terraform.
+- **Phase 10:** quiet-machine latency benchmark (EXP-006), model card, demo script, README, resume bullets.
+
+### Tests (2026-11-18)
+- Python: **128 tests** (backend, geospatial, ml) — all pass locally; real-PostGIS geometry test passes against the Docker database
+- Frontend: **11 tests**, typecheck, lint, build — pass
+- CI (GitHub Actions): 6 jobs green on the last pushed commit before this entry (run 44415748908)
+
+### Bugs found & fixed in Phases 4–10
+- PostGIS reads returned raw bytes (ST_AsEWKB wrapper replaced the column type) → parse hex EWKB; real-PostGIS test in CI
+- Docker named volume root-owned → uploads failed; storage dir now created app-owned
+- Rasterio wheel missing `libexpat` in slim image; TorchGeo's `jsonnet` dependency unbuildable on ARM64 → optional extra
+- Tiling seams (2e-3 differences) → zero-weight band at interior tile edges (now ≤ 1e-5)
+- CI: CPU torch with mismatched torchvision → install both from the CPU index
+- SN8 first run predicted no flooded pixels → flood-focused crops + Dice (still a negative result for buildings)
+- LOEO recorded git state at write time → captured once at start
+
+### Not done
+See PROJECT_PLAN.md → "Not done / future work": xBD training (needs your download), SpaceNet 8 Louisiana, Platt/isotonic calibration, tile server, AWS apply.
+
+
 ## 2026-11-18 — Phase 3 (baselines + U-Net) complete
 - Code: U-Net, BCE+Dice loss (ignore index), pooled + per-event metrics with chip-bootstrap CIs, training loop (early stopping, checkpoints with config/split hash/git state, MLflow), latency benchmark, 4 classical baselines, summary and error-analysis scripts
 - Experiments: 6 U-Net runs (2 split schemes × 3 seeds) + baselines — full tables in EXPERIMENTS.md (EXP-001)

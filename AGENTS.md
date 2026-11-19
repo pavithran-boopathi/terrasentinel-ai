@@ -31,6 +31,12 @@ Read `PROJECT_PLAN.md`, `ARCHITECTURE.md` and the latest entry in `PROGRESS.md` 
 | Env report | `python scripts/check_env.py` |
 | Download Sen1Floods11 (hand-labeled S1) | `python scripts/download_sen1floods11.py` (ask first) |
 | Build splits/stats/report | `python scripts/prepare_sen1floods11.py` |
+| Train a config | `python -m ml.training.train --config ml/configs/<cfg>.yaml [--seed N]` |
+| Grid of configs × seeds | `scripts/run_grid.sh "cfgA cfgB" "42 1 2"` |
+| Baselines / LOEO / SN8 | `python scripts/run_baselines.py` · `python -m ml.training.loeo` · `python -m ml.training.train_spacenet8` |
+| Results for docs + web app | `python scripts/export_experiments_json.py` (then rebuild the api image) |
+| Register serving model | `python scripts/register_model.py --run data/checkpoints/<run> --name … --version … --default` |
+| Uncertainty / latency | `python scripts/evaluate_uncertainty.py --runs …` · `python scripts/benchmark_latency.py` (quiet machine) |
 
 ## Conventions
 - Settings via `TS_*` env vars (`backend/core/config.py`). Secrets only in `.env` (git-ignored).

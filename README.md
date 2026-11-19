@@ -23,6 +23,9 @@ What the evidence says (details in EXPERIMENTS.md):
 - Their real advantage is **generalisation to unseen floods**: on Bolivia, pretrained SegFormers reach ~0.71 vs 0.44 for the pixel classifier, with low seed variance.
 - **Training-event diversity matters more than architecture**: the same unseen Bolivia event scores 0.64–0.71 when models train on 10 events, 0.30–0.50 when they train on 6.
 - Errors are mostly **missed water** (precision ≈ 0.9, recall ≈ 0.7 on held-out events) — flooded vegetation and narrow channels that are not dark in SAR.
+- **Leave-one-event-out CV** (11 folds, no model selection on the held-out event): U-Net ResNet-34 averages 0.576 ± 0.184 IoU vs 0.516 for the pixel baseline and wins on 8/11 events; per-event difficulty (0.27 Pakistan … 0.83 Mekong) dwarfs architecture differences.
+- **Infrastructure (SpaceNet 8 Germany):** an end-to-end deep model failed to learn building flood status on 131 tiles (F1 0.00 — reported as a negative result); given known geometry, an object-level classifier detects flooded roads well (F1 0.60, AUROC 0.87) and buildings only weakly (AUROC 0.68).
+- **Speed:** SegFormer-B0 runs a 512² chip in 9.3 ms on the M5 Pro GPU; tiled inference covers a 4096² scene (≈1,680 km² at 10 m) in 1.3 s.
 - Predictive uncertainty is useful: entropy detects misclassified pixels with AUROC 0.82–0.88; deferring the 10 % least certain pixels lifts IoU on the rest from ≈ 0.65 to ≈ 0.78.
 - Data issues found and handled: an all-NaN Sentinel-1 chip in the official test split (excluded), extreme backscatter outliers (clipped), and event leakage in the official splits (event-held-out and leave-one-event-out protocols added).
 
